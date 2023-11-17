@@ -1,0 +1,87 @@
+﻿column,units,description
+id,NA,unique plant identifier [co2]_[inoc]_[n.trt]_[rep]
+co2,<numeric>,"co2 treatment. one of ""420"" or ""1000"""
+inoc,<character>,"inoculation treatment. one of ""inoc"" or ""no.inoc"""
+n.trt,<numeric>,"N fertilization treatment. one of 0, 35, 70, 105, 140, 210, 280, 350, 630"
+rep,<numeric>,unique pot number spanning 1-144
+sow_date,mm/dd/yyyy,planting date
+rack,<numeric>,starting chamber rack [chamber_number] followed by one of t (top) or b (bottom)
+germ_date,mm/dd/yyyy,germination date
+thin_date,mm/dd/yyyy,pot thinning date
+harvest_date,mm/dd/yyyy,date of experiment harvest
+focal.area,cm^2,focal leaf area (used for gas exchange)
+tla,cm^2,total leaf area
+focal.biomass,g,focal leaf biomass
+leaf.biomass,g,total leaf biomass
+chlor.biomass,g,chlorophyll leaf biomass
+stem.biomass,g,stem biomass
+root.biomass,g,root biomass
+nodule.biomass,g,nodule biomass
+total.biomass,g,total biomass
+bvr,g/L,ratio of total biomass to pot volume (6 L)
+nmass.focal,gN/g,focal leaf nitrogen content
+nmass.nod,gN/g,nodule nitrogen content
+nmass.tl,gN/g,total leaf nitrogen content
+nmass.tr,gN/g,total root nitrogen content
+nmass.ts,gN/g,total stem nitrogen content
+nmass.chl,gN/g,chlorophyll leaf nitrogen content
+cmass.focal,gC/g,focal leaf carbon content
+cmass.nod,gC/g,focal nodule carbon content
+cmass.tl,gC/g,total leaf carbon content
+cmass.tr,gC/g,total root carbon content
+cmass.ts,gC/g,total stem carbon content
+cmass.chl,gC/g,chlorophyll leaf carbon content
+chlA.ugml,ug/mL,chlorophyll A content (ug) per unit DMSO solution
+chlB.ugml,ug/mL,chlorophyll B content (ug) per unit DMSO solution
+chlA.gml,g/mL,chlorophyll A content (g) per unit DMSO solution
+chlB.gml,g/mL,chlorophyll B content (g) per unit DMSO solution
+chlA.g,g,total chlorophyll A content
+chlB.g,g,total chlorophyll B content
+chlA.gm2,g/m^2,chlorophyll A content per unit leaf disk area
+chlB.gm2,g/m^2,chlorophyll B content per unit leaf disk area
+chlA.mmolm2,mmol/m^2,chlorophyll A content per unit leaf disk area
+chlB.mmolm2,mmol/m^2,chlorophyll B content per unit leaf disk area
+chlA.chlB,unitless,ratio of chlA.g to chlB.g
+disk.area,cm^2,leaf disk area
+chl.leaf.area,cm^2,chlorophyll leaf area
+tleaf,degC,leaf temperature (for gas exchange measurements)
+anet,μmol/m^2/s,net photosynthesis at 420 umol mol CO2
+anet.growth,μmol/m^2/s,net photosynthesis at growth CO2 condition (420 or 1000 umol mol CO2)
+gsw,mol/m^2/s,stomatal conductance to water at 420 umol mol CO2
+gsw.growth,mol/m^2/s,stomatal conductance at growth CO2 condition (420 or 1000 umol mol CO2)
+ci.ca,unitless,ratio of leaf intercellular CO2 to extracellular CO2 (gas exchange based)
+vcmax25,μmol/m^2/s,maximum rate of Rubisco carboxylation at Tleaf = 25degC
+jmax25,μmol/m^2/s,maximum rate of electron transport for RuBP regeneration at Tleaf = 25degC
+jmax25.vcmax25,unitless,ratio of Jmax25 to Vcmax25
+rd25,μmol/m^2/s,dark respiration rate at Tleaf = 25degC
+tpu,μmol/m^2/s,triose phosphate utilization rate 
+leaf.d13c,‰,leaf d13C discrimination
+leaf.d15n,‰,leaf d15N discrimination
+ndfa,%,percent leaf nitrogen content derived from the atmosphere
+chi,unitless,leaf d13C-derived estimate of the leaf Ci:Ca
+beta,unitless,cost for acquiring and using nitrogen relative to water 
+marea,g/m^2,leaf biomass per unit leaf area
+marea.chl,g/m^2,leaf biomass per unit leaf area in the chlorophyll leaf
+narea,gN/m^2,focal leaf nitrogen content per unit leaf area
+narea.chl,gN/m^2,chlorophyll leaf nitrogen content per unit leaf area
+p.rubisco,g/g,fraction of leaf nitrogen content allocated to Rubisco
+p.bioe,g/g,fraction of leaf nitrogen content allocated to bioenergetics
+p.lightharv,g/g,fraction of leaf nitrogen content allocated to light harvesting proteins
+p.photo,g/g,fraction of leaf nitrogen content allocated to photosynthesis
+p.structure,g/g,fraction of leaf nitrogen content allocated to structure
+pnue,umol CO2/mol N/s,"photosynthetic nitrogen-use efficiency using Anet,420"
+pnue.growth,umol CO2/mol N/s,"photosynthetic nitrogen-use efficiency using Anet,growth"
+iwue,umol CO2/mol H2O,"intrinsic water-use efficiency using Anet,420"
+iwue.growth,umol CO2/mol H2O,"intrinsic water-use efficiency using Anet,growth"
+narea.chi,gN/m^2,ratio of area-based leaf nitrogen content to leaf Ci:Ca
+vcmax.chi,μmol/m^2/s,ratio of maximum Rubisco carboxylation to leaf Ci:Ca
+stomlim,unitless,stomatal limitation of net photosynthesis
+leaf.totaln,gN,total leaf nitrogen biomass
+stem.totaln,gN,total stem nitrogen biomass
+root.totaln,gN,total root nitrogen biomass
+root.totalc,gC,total root carbon biomass
+nod.totaln,gN,total root nodule nitrogen biomass
+nod.totalc,gC,total root nodule carbon biomass
+wpn,gN,whole-plant nitrogen biomass
+cbg,gC,belowground carbon allocation
+ncost,gC/gN,structural carbon cost to acquire nitrogen (Cbg/Wpn)
