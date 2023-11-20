@@ -1,3 +1,8 @@
+## NxCO2xI script that investigates chamber climate. Note that plants
+## were shuffled between chambers throughout course of experiment, so
+## climate data is concatenated across chambers. 
+##
+## Script paths assume the root directory of this script.
 
 ##########################################################################
 ## Load libraries and data files
