@@ -20,15 +20,12 @@ df <- read.csv("../data/NxCO2xI_data.csv") %>%
   mutate(n.trt = as.numeric(n.trt),
          inoc = factor(inoc, levels = c("no.inoc", "inoc")),
          co2 = factor(co2, levels = c("amb", "elv")),
-         co2.inoc = str_c(co2, "_", inoc),
-         nod.root.ratio = nodule.biomass / root.biomass,
-         pnue.growth = anet.growth / (narea / 14)) %>%
+         co2.inoc = str_c(co2, "_", inoc)) %>%
   filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05))
   ## filter all uninoculated pots that have nod biomass > 0.05 g;
   ## hard code inoc/co2 to make coefficients easier to understand
 
 df.removed <- read.csv("../data/NxCO2xI_data.csv") %>%
-  mutate(nod.root.ratio = nodule.biomass / root.biomass) %>%
   dplyr::filter(inoc == "no.inoc" & nod.root.ratio > 0.05)
 
 ##########################################################################
@@ -166,7 +163,7 @@ test(emtrends(anet, ~1, "n.trt"))
 ##########################################################################
 ## Net photosynthesis at growth CO2 concentration (Anet,growth)
 ##########################################################################
-anet.growth <- lmer(anet.growth ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+anet.growth <- lmer(anet.growth ~ co2 * inoc * n.trt + (1|rack:co2))
 
 # Check model fit
 plot(anet.growth)
@@ -218,7 +215,6 @@ test(emtrends(vcmax, ~1, "n.trt"))
 
 # Percent change for study limitation section
 emmeans(vcmax, ~1, "n.trt", at = list(n.trt = c(0, 630)))
-
 
 ##########################################################################
 ## Maximum electron transport for RuBP regeneration rate (Jmax25)
@@ -353,7 +349,6 @@ r.squaredGLMM(chi)
 
 # Pairwise comparisons
 test(emtrends(chi, pairwise~inoc*co2, "n.trt"))
-
 emmeans(chi, pairwise~inoc*co2)
 test(emtrends(chi, pairwise~inoc, "n.trt"))
 test(emtrends(chi, pairwise~co2, "n.trt"))
@@ -366,7 +361,8 @@ emmeans(chi, pairwise~co2)
 ##########################################################################
 ## Total leaf area
 ##########################################################################
-tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2), 
+            data = df)
 
 # Check model fit
 plot(tla)
@@ -424,10 +420,6 @@ emmeans(tbio, pairwise~inoc)
 cld(emmeans(tbio, pairwise~co2*inoc))
 test(emtrends(tbio, ~1, "n.trt"))
 
-## Does inoculation stimulate total biomass under low soil N?
-emmeans(tbio, pairwise~inoc*co2, "n.trt", regrid = "response",
-        at = list(n.trt = c(0, 630)))
-
 ##########################################################################
 ## Structural carbon cost to acquire nitrogen (Ncost)
 ##########################################################################
@@ -451,10 +443,7 @@ Anova(ncost)
 r.squaredGLMM(ncost)
 
 # Pairwise comparisons
-## Three-way interaction
 test(emtrends(ncost, pairwise~co2*inoc, "n.trt"))
-
-## Two-way interaction between CO2 and soil N
 test(emtrends(ncost, pairwise~co2, "n.trt"))
 test(emtrends(ncost, pairwise~inoc, "n.trt"))
 emmeans(ncost, pairwise~co2*inoc)
@@ -463,11 +452,6 @@ emmeans(ncost, pairwise~co2*inoc)
 emmeans(ncost, pairwise~co2)
 emmeans(ncost, pairwise~inoc)
 test(emtrends(ncost, ~1, "n.trt"))
-
-
-## Does inoculation stimulate whole plant nitrogen uptake under low soil N?
-test(emmeans(ncost, pairwise~co2*inoc, "n.trt", 
-             at = list(n.trt = c(0,35,70,105,140,210,280,350,630))))
 
 ##########################################################################
 ## Belowground carbon biomass
@@ -524,15 +508,13 @@ emmeans(wpn, pairwise~co2, type = "response")
 emmeans(wpn, pairwise~inoc, type = "response")
 test(emtrends(wpn, ~1, "n.trt", regrid = "response"))
 
-## Does inoculation stimulate whole plant nitrogen uptake under low soil N?
-test(emmeans(wpn, pairwise~inoc, "n.trt", at = list(n.trt = c(0,35,70,105,140,210,280,350,630))))
-
 ##########################################################################
 ## Root nodule biomass: root biomass
 ##########################################################################
 df$nodule.biomass[80] <- NA
 
-nod.bio <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+nod.bio <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + 
+                  (1|rack:co2), data = df)
 
 # Check model fit
 plot(nod.bio)
@@ -556,18 +538,11 @@ emmeans(nod.bio, pairwise~co2)
 emmeans(nod.bio, pairwise~inoc)
 test(emtrends(nod.bio, ~1, "n.trt"))
 
-# Percent change in inoculated pots
-emmeans(nod.bio, ~inoc, "n.trt", at = list(n.trt = c(0, 630)))
-
-## Does inoculation stimulate under low soil N?
-emmeans(nod.bio, pairwise~inoc, "n.trt", type = "response",
-        at = list(n.trt = c(0,35,70,105,140,210,280,350,630)))
-
-
 ##########################################################################
 ## Root nodule biomass: root biomass
 ##########################################################################
-nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + 
+                         (1|rack:co2), data = df)
 
 # Check model fit
 plot(nod.root.ratio)

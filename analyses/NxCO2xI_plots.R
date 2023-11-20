@@ -17,10 +17,8 @@ emm_options(opt.digits = FALSE)
 df <- read.csv("../data/NxCO2xI_data.csv", 
                na.strings = "NA") %>%
   mutate(n.trt = as.numeric(n.trt),
-         rd25.vcmax25 = rd25 / vcmax25,
          inoc = factor(inoc, levels = c("no.inoc", "inoc")),
-         co2 = factor(co2, levels = c("amb", "elv")),
-         nod.root.ratio = nodule.biomass / root.biomass) %>%
+         co2 = factor(co2, levels = c("amb", "elv"))) %>%
   filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05)) %>%
   unite(col = "co2.inoc", co2:inoc, sep = "_", remove = FALSE) %>%
   mutate(co2.inoc = factor(co2.inoc,
@@ -717,10 +715,8 @@ rd25.plot
 ## PNUE regression line prep
 ##########################################################################
 df$pnue.growth[41] <- NA
-df$pnue.growth[df$pnue.growth > 400/14] <- NA
 
 pnue <- lmer(pnue.growth ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
-shapiro.test(residuals(pnue))
 test(emtrends(pnue, ~co2*inoc, "n.trt"))
 
 ## Emmean fxns for regression lines + error ribbons
@@ -1202,7 +1198,6 @@ nwp.plot
 ##########################################################################
 ## Root nodule biomass regression line prep for plot in supplement
 ##########################################################################
-df$nodule.biomass[df$nod.root.ratio > 0.05 & df$inoc == "no.inoc"] <- NA
 df$nodule.biomass[80] <- NA
 
 nod <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
@@ -1263,7 +1258,6 @@ nod.plot
 ##########################################################################
 nodroot <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 test(emtrends(nodroot, ~co2*inoc, "n.trt"))
-test(emtrends(nodroot, ~inoc, "n.trt"))
 
 ## Emmean fxns for regression lines + error ribbons
 nodroot.regline <- data.frame(emmeans(nodroot, ~co2*inoc, "n.trt",
@@ -1318,6 +1312,7 @@ nodroot.plot
 ## BVR regression line prep for plot in supplement
 ##########################################################################
 bvr <- lmer(bvr ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+shapiro.test(residuals(bvr))
 test(emtrends(bvr, ~co2*inoc, "n.trt"))
 
 ## Emmean fxns for regression lines + error ribbons
