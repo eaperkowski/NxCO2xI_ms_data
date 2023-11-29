@@ -1365,6 +1365,61 @@ bvr.plot <- ggplot(data = df,
 bvr.plot
 
 ##########################################################################
+## Root biomass
+##########################################################################
+root.bio <- lmer(root.biomass ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+test(emtrends(root.bio, ~co2*inoc, "n.trt"))
+
+
+## Emmean fxns for regression lines + error ribbons
+root.bio.regline <- data.frame(emmeans(root.bio, ~co2*inoc, "n.trt",
+                                       at = list(n.trt = seq(0, 630, 5)),
+                                       type = "response")) %>%
+  mutate(co2.inoc = str_c(co2, "_", inoc),
+         co2.inoc = factor(co2.inoc, 
+                           levels = c("elv_inoc","elv_no.inoc", 
+                                      "amb_inoc", "amb_no.inoc")))
+
+##########################################################################
+## Root biomass plot
+##########################################################################
+root.bio.plot <- ggplot(data = df, aes(x = n.trt, y = root.biomass, fill = co2.inoc)) +
+  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
+  geom_smooth(data = root.bio.regline,
+              aes(color = co2.inoc, y = emmean), 
+              linewidth = 1.5, se = FALSE) +
+  geom_ribbon(data = root.bio.regline,
+              aes(fill = co2.inoc, y = emmean, 
+                  ymin = lower.CL, ymax = upper.CL), 
+              linewidth = 1.5, alpha = 0.25) +
+  scale_color_manual(values = full.cols,
+                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                                expression("Elevated CO"["2"]*", uninoculated"),
+                                expression("Ambient CO"["2"]*", inoculated"),
+                                expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_fill_manual(values = full.cols,
+                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                               expression("Elevated CO"["2"]*", uninoculated"),
+                               expression("Ambient CO"["2"]*", inoculated"),
+                               expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_shape_manual(values = c(21, 24), 
+                     labels = c("Uninoculated", "Inoculated")) +
+  scale_y_continuous(limits = c(0, 10), breaks = seq(0, 10, 2)) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  labs(x = "Soil N fertilization (ppm)",
+       y = "Root biomass (g)",
+       fill = "Treatment", color = "Treatment",
+       shape = "Inoculation") +
+  theme_bw(base_size = 18) +
+  theme(axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        panel.border = element_rect(linewidth = 1.25),
+        legend.text.align = 0) +
+  guides(linetype = "none", shape = "none",
+         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
+root.bio.plot
+
+##########################################################################
 ## Figure 1: leaf N plots
 ##########################################################################
 # png("[insert path here]",
@@ -1410,15 +1465,7 @@ ggarrange(tla.plot, tbio.plot, ncost.plot, ndfa.plot,
 # dev.off()
 
 ##########################################################################
-## Figure S1: BVR
-##########################################################################
-# png("[insert path here]",
-#     height = 4.5, width = 8, units = "in", res = 600)
-bvr.plot
-# dev.off()
-
-##########################################################################
-## Figure S2: figure showing NxCO2 interaction for leaf N content
+## Figure S1: figure showing NxCO2 interaction for leaf N content
 ##########################################################################
 # png("[insert path here]",
 #     height = 7, width = 10, units = "in", res = 600)
@@ -1429,7 +1476,7 @@ ggarrange(narea.int.plot, nmass.int.plot, marea.int.plot,
 # dev.off()
 
 ##########################################################################
-## Figure S3: figure showing NxCO2 interaction for PNUE,growth
+## Figure S2: figure showing NxCO2 interaction for PNUE,growth
 ##########################################################################
 # png("[insert path here]",
 #     height = 4.5, width = 8, units = "in", res = 600)
@@ -1437,7 +1484,7 @@ pnue.int.plot
 # dev.off()
 
 ##########################################################################
-## Figure S4: figure showing components of Ncost (belowground C and whole
+## Figure S3: figure showing components of Ncost (belowground C and whole
 ## plant N)
 ##########################################################################
 # png("[insert path here]",
@@ -1450,7 +1497,7 @@ ggarrange(cbg.plot, nwp.plot,
 # dev.off()
 
 ##########################################################################
-## Figure S5: nitrogen fixation plots
+## Figure S4: nitrogen fixation plots
 ##########################################################################
 # png("[insert path here]",
 #     height = 4, width = 12, units = "in", res = 600)
@@ -1460,4 +1507,16 @@ ggarrange(nod.plot, nodroot.plot,
           legend = "right", labels = c("(a)", "(b)"), 
           font.label = list(size = 18))
 # dev.off()
+
+##########################################################################
+## Figure S5: BVR + root biomass
+##########################################################################
+png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS5_bvr.png",
+    height = 4.5, width = 12, units = "in", res = 600)
+ggarrange(bvr.plot, root.bio.plot,
+          align = "hv", common.legend = TRUE,
+          nrow = 1, ncol = 2,
+          legend = "right", labels = c("(a)", "(b)"), 
+          font.label = list(size = 18))
+dev.off()
 

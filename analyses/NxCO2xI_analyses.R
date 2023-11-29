@@ -148,7 +148,7 @@ shapiro.test(residuals(anet))
 outlierTest(anet)
 
 # Model results
-format(summary(anet)$coefficient, scientific = TRUE, digits = 3)
+summary(anet)
 Anova(anet)
 r.squaredGLMM(anet)
 
@@ -157,13 +157,14 @@ test(emtrends(anet, pairwise~inoc, "n.trt"))
 
 # Individual effects
 emmeans(anet, pairwise~co2)
-cld(emmeans(anet, pairwise~co2*inoc))
+cld(emmeans(anet, pairwise~inoc))
 test(emtrends(anet, ~1, "n.trt"))
 
 ##########################################################################
 ## Net photosynthesis at growth CO2 concentration (Anet,growth)
 ##########################################################################
-anet.growth <- lmer(anet.growth ~ co2 * inoc * n.trt + (1|rack:co2))
+anet.growth <- lmer(anet.growth ~ co2 * inoc * n.trt + (1|rack:co2),
+                    data = df)
 
 # Check model fit
 plot(anet.growth)
@@ -174,7 +175,7 @@ shapiro.test(residuals(anet.growth))
 outlierTest(anet.growth)
 
 # Model results
-format(summary(anet.growth)$coefficient, scientific = TRUE, digits = 3)
+summary(anet.growth)
 Anova(anet.growth)
 r.squaredGLMM(anet.growth)
 
@@ -184,7 +185,7 @@ test(emtrends(anet.growth, pairwise~inoc, "n.trt"))
 
 # Individual effects
 emmeans(anet.growth, pairwise~co2)
-cld(emmeans(anet.growth, pairwise~co2*inoc))
+cld(emmeans(anet.growth, pairwise~inoc))
 test(emtrends(anet.growth, ~1, "n.trt"))
 
 ##########################################################################
@@ -212,9 +213,6 @@ test(emtrends(vcmax, pairwise~inoc, "n.trt"))
 emmeans(vcmax, pairwise~co2)
 emmeans(vcmax, pairwise~inoc)
 test(emtrends(vcmax, ~1, "n.trt"))
-
-# Percent change for study limitation section
-emmeans(vcmax, ~1, "n.trt", at = list(n.trt = c(0, 630)))
 
 ##########################################################################
 ## Maximum electron transport for RuBP regeneration rate (Jmax25)
@@ -328,6 +326,7 @@ test(emtrends(pnue, pairwise~inoc, "n.trt"))
 
 # Individual effects
 emmeans(pnue, pairwise~co2)
+emmeans(pnue, pairwise~inoc)
 
 ##########################################################################
 ## Leaf Ci:Ca (chi)
@@ -361,8 +360,7 @@ emmeans(chi, pairwise~co2)
 ##########################################################################
 ## Total leaf area
 ##########################################################################
-tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2), 
-            data = df)
+tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
 plot(tla)
@@ -384,8 +382,7 @@ emmeans(tla, pairwise~co2*inoc)
 
 ## Individual effects
 emmeans(tla, pairwise~co2)
-emmeans(tla, pairwise~co2*inoc)
-test(emtrends(tla, pairwise~inoc, "n.trt"))
+emmeans(tla, pairwise~inoc)
 
 ## Does inoculation stimulate TLA under low soil N?
 emmeans(tla, pairwise~co2*inoc, "n.trt", type = "response",
@@ -418,7 +415,6 @@ emmeans(tbio, pairwise~co2*inoc)
 emmeans(tbio, pairwise~co2, type = "response")
 emmeans(tbio, pairwise~inoc)
 cld(emmeans(tbio, pairwise~co2*inoc))
-test(emtrends(tbio, ~1, "n.trt"))
 
 ##########################################################################
 ## Structural carbon cost to acquire nitrogen (Ncost)
@@ -479,6 +475,33 @@ cld(emmeans(cbg, pairwise~co2*inoc, type = "response"))
 emmeans(cbg, pairwise~co2, type = "response")
 emmeans(cbg, pairwise~inoc, type = "response")
 test(emtrends(cbg, ~1, "n.trt"))
+
+##########################################################################
+## Root biomass
+##########################################################################
+root.bio <- lmer(root.biomass ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(root.bio)
+qqnorm(residuals(root.bio))
+qqline(residuals(root.bio))
+densityPlot(residuals(root.bio))
+shapiro.test(residuals(root.bio))
+outlierTest(root.bio)
+
+# Model results
+summary(root.bio)
+Anova(root.bio)
+r.squaredGLMM(root.bio)
+
+# Pairwise comparisons
+emmeans(root.bio, pairwise~co2*inoc)
+test(emtrends(root.bio, pairwise~inoc, "n.trt"))
+
+# Individual effects
+emmeans(root.bio, pairwise~co2)
+emmeans(root.bio, pairwise~inoc)
+test(emtrends(root.bio, ~1, "n.trt"))
 
 ##########################################################################
 ## Whole plant nitrogen
@@ -595,6 +618,8 @@ test(emtrends(ndfa, ~inoc, "n.trt"))
 test(emtrends(ndfa, ~co2, "n.trt"))
 test(emtrends(ndfa, ~1, "n.trt"))
 emmeans(ndfa, pairwise~inoc)
+
+emmeans(ndfa, pairwise~co2, at = list(n.ppm = 0))
 
 ##########################################################################
 ## Table 1: Leaf N content
