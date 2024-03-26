@@ -416,6 +416,9 @@ emmeans(tbio, pairwise~co2, type = "response")
 emmeans(tbio, pairwise~inoc)
 cld(emmeans(tbio, pairwise~co2*inoc))
 
+## Does inoculation increase positive effect of elevated CO2 on total biomass?
+emmeans(tbio, pairwise~co2*inoc, at = list(n.ppm = 0)) # No
+
 ##########################################################################
 ## Structural carbon cost to acquire nitrogen (Ncost)
 ##########################################################################
@@ -452,7 +455,7 @@ test(emtrends(ncost, ~1, "n.trt"))
 ##########################################################################
 ## Belowground carbon biomass
 ##########################################################################
-cbg <- lmer(log(cbg) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+cbg <- lmer(cbg ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
 plot(cbg)
@@ -475,33 +478,6 @@ cld(emmeans(cbg, pairwise~co2*inoc, type = "response"))
 emmeans(cbg, pairwise~co2, type = "response")
 emmeans(cbg, pairwise~inoc, type = "response")
 test(emtrends(cbg, ~1, "n.trt"))
-
-##########################################################################
-## Root biomass
-##########################################################################
-root.bio <- lmer(root.biomass ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
-
-# Check model fit
-plot(root.bio)
-qqnorm(residuals(root.bio))
-qqline(residuals(root.bio))
-densityPlot(residuals(root.bio))
-shapiro.test(residuals(root.bio))
-outlierTest(root.bio)
-
-# Model results
-summary(root.bio)
-Anova(root.bio)
-r.squaredGLMM(root.bio)
-
-# Pairwise comparisons
-emmeans(root.bio, pairwise~co2*inoc)
-test(emtrends(root.bio, pairwise~inoc, "n.trt"))
-
-# Individual effects
-emmeans(root.bio, pairwise~co2)
-emmeans(root.bio, pairwise~inoc)
-test(emtrends(root.bio, ~1, "n.trt"))
 
 ##########################################################################
 ## Whole plant nitrogen
@@ -562,6 +538,34 @@ emmeans(nod.bio, pairwise~inoc)
 test(emtrends(nod.bio, ~1, "n.trt"))
 
 ##########################################################################
+## Root biomass
+##########################################################################
+root.bio <- lmer(sqrt(root.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(root.bio)
+qqnorm(residuals(root.bio))
+qqline(residuals(root.bio))
+densityPlot(residuals(root.bio))
+shapiro.test(residuals(root.bio))
+outlierTest(root.bio)
+
+# Model results
+summary(root.bio)
+Anova(root.bio)
+r.squaredGLMM(root.bio)
+
+# Pairwise comparisons
+emmeans(root.bio, pairwise~co2*inoc, type = "response")
+test(emtrends(root.bio, pairwise~co2, "n.trt"))
+test(emtrends(root.bio, pairwise~inoc, "n.trt"))
+
+# Individual effects
+emmeans(root.bio, pairwise~co2, type = "response")
+emmeans(root.bio, pairwise~inoc)
+test(emtrends(root.bio, ~1, "n.trt"))
+
+##########################################################################
 ## Root nodule biomass: root biomass
 ##########################################################################
 nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + 
@@ -619,7 +623,29 @@ test(emtrends(ndfa, ~co2, "n.trt"))
 test(emtrends(ndfa, ~1, "n.trt"))
 emmeans(ndfa, pairwise~inoc)
 
-emmeans(ndfa, pairwise~co2, at = list(n.ppm = 0))
+##########################################################################
+## Biomass : pot volume
+##########################################################################
+bvr <- lmer(bvr ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(bvr)
+qqnorm(residuals(bvr))
+qqline(residuals(bvr))
+densityPlot(residuals(bvr))
+shapiro.test(residuals(bvr))
+outlierTest(bvr)
+
+# Model results
+summary(bvr)
+Anova(bvr)
+r.squaredGLMM(bvr)
+
+# Pairwise comparisons
+test(emtrends(bvr, pairwise~inoc, "n.trt"))
+test(emtrends(bvr, pairwise~co2, "n.trt"))
+test(emtrends(bvr, ~1, "n.trt"))
+emmeans(bvr, pairwise~inoc)
 
 ##########################################################################
 ## Table 1: Leaf N content
