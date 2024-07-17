@@ -20,7 +20,12 @@ df <- read.csv("../data/NxCO2xI_data.csv") %>%
   mutate(n.trt = as.numeric(n.trt),
          inoc = factor(inoc, levels = c("no.inoc", "inoc")),
          co2 = factor(co2, levels = c("amb", "elv")),
-         co2.inoc = str_c(co2, "_", inoc)) %>%
+         co2.inoc = str_c(co2, "_", inoc),
+         lar = tla / total.biomass,
+         lmf = leaf.biomass / total.biomass,
+         smf = stem.biomass / total.biomass,
+         rmf = root.biomass / total.biomass,
+         root.shoot.ratio = root.biomass / (leaf.biomass + stem.biomass)) %>%
   filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05))
   ## filter all uninoculated pots that have nod biomass > 0.05 g;
   ## hard code inoc/co2 to make coefficients easier to understand
@@ -55,6 +60,12 @@ emmeans(narea, pairwise~co2*inoc)
 emmeans(narea, pairwise~co2)
 emmeans(narea, pairwise~inoc)
 test(emtrends(narea, ~1, "n.trt"))
+
+# % change co2
+(1.380 - 1.932) / 1.932 * 100
+
+# % change inoc
+(1.864 - 1.449) / 1.449 * 100
 
 ##########################################################################
 ## Mass-based leaf nitrogen content (Nmass)
@@ -214,6 +225,12 @@ emmeans(vcmax, pairwise~co2)
 emmeans(vcmax, pairwise~inoc)
 test(emtrends(vcmax, ~1, "n.trt"))
 
+# % change CO2
+(72.830 - 87.096) / 87.096 * 100
+
+# % change inoculation
+(94.700 - 65.225) / 65.225 * 100
+
 ##########################################################################
 ## Maximum electron transport for RuBP regeneration rate (Jmax25)
 ##########################################################################
@@ -240,8 +257,11 @@ emmeans(jmax, pairwise~co2)
 emmeans(jmax, pairwise~inoc)
 test(emtrends(jmax, ~1, "n.trt"))
 
-# Percent change for study limitation section
-emmeans(jmax, ~1, "n.trt", at = list(n.trt = c(0, 630)))
+# % change CO2
+(137.364 - 151.834) / 151.834 * 100
+
+# % change inoculation
+(168.318 - 119.880) / 119.880 * 100
 
 ##########################################################################
 ## Ratio of Jmax25 to Vcmax25
@@ -329,35 +349,6 @@ emmeans(pnue, pairwise~co2)
 emmeans(pnue, pairwise~inoc)
 
 ##########################################################################
-## Leaf Ci:Ca (chi)
-##########################################################################
-chi <- lmer(chi ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
-
-# Check model fit
-plot(chi)
-qqnorm(residuals(chi))
-qqline(residuals(chi))
-densityPlot(residuals(chi))
-shapiro.test(residuals(chi))
-outlierTest(chi)
-
-# Model results
-summary(chi)
-Anova(chi)
-r.squaredGLMM(chi)
-
-# Pairwise comparisons
-test(emtrends(chi, pairwise~inoc*co2, "n.trt"))
-emmeans(chi, pairwise~inoc*co2)
-test(emtrends(chi, pairwise~inoc, "n.trt"))
-test(emtrends(chi, pairwise~co2, "n.trt"))
-
-## Individual effect of n.trt on chi
-test(emtrends(chi, ~1, "n.trt"))
-emmeans(chi, pairwise~inoc)
-emmeans(chi, pairwise~co2)
-
-##########################################################################
 ## Total leaf area
 ##########################################################################
 tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
@@ -420,6 +411,142 @@ cld(emmeans(tbio, pairwise~co2*inoc))
 emmeans(tbio, pairwise~co2*inoc, at = list(n.ppm = 0)) # No
 
 ##########################################################################
+## Leaf area ratio
+##########################################################################
+df$lar[c(101, 112)] <- NA
+
+lar <- lmer(sqrt(lar) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(lar)
+qqnorm(residuals(lar))
+qqline(residuals(lar))
+densityPlot(residuals(lar))
+shapiro.test(residuals(lar))
+outlierTest(lar)
+
+# Model results
+summary(lar)
+Anova(lar)
+r.squaredGLMM(lar)
+
+# Pairwise comparisons
+emmeans(lar, pairwise~co2)
+
+cld(emmeans(lar, pairwise~co2*inoc))
+test(emtrends(lar, ~co2, "n.trt"))
+test(emtrends(lar, ~inoc, "n.trt"))
+
+##########################################################################
+## Root:shoot ratio
+##########################################################################
+df$root.shoot.ratio[c(101)] <- NA
+
+rootshoot <- lmer(log(root.shoot.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), 
+                  data = df)
+
+# Check model fit
+plot(rootshoot)
+qqnorm(residuals(rootshoot))
+qqline(residuals(rootshoot))
+densityPlot(residuals(rootshoot))
+shapiro.test(residuals(rootshoot))
+outlierTest(rootshoot)
+
+# Model results
+summary(rootshoot)
+Anova(rootshoot)
+r.squaredGLMM(rootshoot)
+
+# Pairwise comparisons
+emmeans(rootshoot, pairwise~co2, type = "response")
+cld(emmeans(rootshoot, ~co2*inoc, type = "response"))
+
+test(emtrends(rootshoot, ~1, "n.trt"))
+test(emtrends(rootshoot, ~inoc, "n.trt"))
+
+
+##########################################################################
+## Leaf mass fraction
+##########################################################################
+df$lmf[c(37, 38, 101, 102, 104)] <- NA
+
+lmf <- lmer(lmf ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(lmf)
+qqnorm(residuals(lmf))
+qqline(residuals(lmf))
+densityPlot(residuals(lmf))
+shapiro.test(residuals(lmf))
+outlierTest(lmf)
+
+# Model results
+summary(lmf)
+Anova(lmf)
+r.squaredGLMM(lmf)
+
+# Pairwise comparisons
+cld(emmeans(lmf, pairwise~co2*inoc))
+test(emtrends(lmf, pairwise~inoc, "n.trt"))
+
+emmeans(lmf, pairwise~co2)
+emmeans(lmf, pairwise~inoc)
+test(emtrends(lmf, ~1, "n.trt"))
+
+# % change CO2
+(0.398 - 0.369) / 0.369 * 100
+
+##########################################################################
+## Stem mass fraction
+##########################################################################
+df$smf[113] <- NA
+
+smf <- lmer(smf ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(smf)
+qqnorm(residuals(smf))
+qqline(residuals(smf))
+densityPlot(residuals(smf))
+shapiro.test(residuals(smf))
+outlierTest(smf)
+
+# Model results
+summary(smf)
+Anova(smf)
+r.squaredGLMM(smf)
+
+# Pairwise comparisons
+test(emtrends(smf, ~1, "n.trt"))
+test(emtrends(smf, ~inoc, "n.trt"))
+
+##########################################################################
+## Root mass fraction
+##########################################################################
+df$rmf[c(101)] <- NA
+
+rmf <- lmer(log(rmf) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(rmf)
+qqnorm(residuals(rmf))
+qqline(residuals(rmf))
+densityPlot(residuals(rmf))
+shapiro.test(residuals(rmf))
+outlierTest(rmf)
+
+# Model results
+summary(rmf)
+Anova(rmf)
+r.squaredGLMM(rmf)
+
+# Pairwise comparisons
+cld(emmeans(rmf, ~co2*inoc, type = "response"))
+test(emtrends(rmf, ~inoc, "n.trt"))
+
+
+##########################################################################
 ## Structural carbon cost to acquire nitrogen (Ncost)
 ##########################################################################
 df$ncost[c(100, 101)] <- NA
@@ -442,7 +569,7 @@ Anova(ncost)
 r.squaredGLMM(ncost)
 
 # Pairwise comparisons
-test(emtrends(ncost, pairwise~co2*inoc, "n.trt"))
+cld(emtrends(ncost, pairwise~co2*inoc, "n.trt"))
 test(emtrends(ncost, pairwise~co2, "n.trt"))
 test(emtrends(ncost, pairwise~inoc, "n.trt"))
 emmeans(ncost, pairwise~co2*inoc)
@@ -510,10 +637,40 @@ test(emtrends(wpn, ~1, "n.trt", regrid = "response"))
 ##########################################################################
 ## Root nodule biomass: root biomass
 ##########################################################################
+nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+
+# Check model fit
+plot(nod.root.ratio)
+qqnorm(residuals(nod.root.ratio))
+qqline(residuals(nod.root.ratio))
+densityPlot(residuals(nod.root.ratio))
+shapiro.test(residuals(nod.root.ratio))
+outlierTest(nod.root.ratio)
+
+# Model results
+summary(nod.root.ratio)
+Anova(nod.root.ratio)
+r.squaredGLMM(nod.root.ratio)
+
+# Pairwise comparisons
+test(emtrends(nod.root.ratio, pairwise~inoc, "n.trt"))
+test(emtrends(nod.root.ratio, pairwise~co2, "n.trt"))
+cld(emmeans(nod.root.ratio, pairwise~co2*inoc, type = "response"))
+
+## Individual effects
+emmeans(nod.root.ratio, pairwise~co2)
+emmeans(nod.root.ratio, pairwise~inoc)
+test(emtrends(nod.root.ratio, ~1, "n.trt"))
+
+# Percent change in inoculated pots
+emmeans(nod.root.ratio, ~inoc, "n.trt", at = list(n.trt = c(0, 630)))
+
+##########################################################################
+## Root nodule biomass
+##########################################################################
 df$nodule.biomass[80] <- NA
 
-nod.bio <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + 
-                  (1|rack:co2), data = df)
+nod.bio <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
 plot(nod.bio)
@@ -539,6 +696,8 @@ test(emtrends(nod.bio, ~1, "n.trt"))
 
 ##########################################################################
 ## Root biomass
+<<<<<<< HEAD
+=======
 ##########################################################################
 root.bio <- lmer(sqrt(root.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
@@ -567,62 +726,59 @@ test(emtrends(root.bio, ~1, "n.trt"))
 
 ##########################################################################
 ## Root nodule biomass: root biomass
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
 ##########################################################################
-nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + 
-                         (1|rack:co2), data = df)
+root.bio <- lmer(root.biomass ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
-plot(nod.root.ratio)
-qqnorm(residuals(nod.root.ratio))
-qqline(residuals(nod.root.ratio))
-densityPlot(residuals(nod.root.ratio))
-shapiro.test(residuals(nod.root.ratio))
-outlierTest(nod.root.ratio)
+plot(root.bio)
+qqnorm(residuals(root.bio))
+qqline(residuals(root.bio))
+densityPlot(residuals(root.bio))
+shapiro.test(residuals(root.bio))
+outlierTest(root.bio)
 
 # Model results
-summary(nod.root.ratio)
-Anova(nod.root.ratio)
-r.squaredGLMM(nod.root.ratio)
+summary(root.bio)
+Anova(root.bio)
+r.squaredGLMM(root.bio)
 
 # Pairwise comparisons
-test(emtrends(nod.root.ratio, pairwise~inoc, "n.trt"))
-test(emtrends(nod.root.ratio, pairwise~co2, "n.trt"))
-emmeans(nod.root.ratio, pairwise~co2*inoc, type = "response")
+emmeans(root.bio, pairwise~co2*inoc)
+test(emtrends(root.bio, pairwise~inoc, "n.trt"))
 
-## Individual effects
-emmeans(nod.root.ratio, pairwise~co2)
-emmeans(nod.root.ratio, pairwise~inoc)
-test(emtrends(nod.root.ratio, ~1, "n.trt"))
-
-# Percent change in inoculated pots
-emmeans(nod.root.ratio, ~inoc, "n.trt", at = list(n.trt = c(0, 630)))
+# Individual effects
+emmeans(root.bio, pairwise~co2)
+emmeans(root.bio, pairwise~inoc)
+test(emtrends(root.bio, ~1, "n.trt"))
 
 ##########################################################################
-## Percent leaf nitrogen fixed from the atmosphere (%Ndfa)
+## BVR
 ##########################################################################
-df$ndfa[c(38, 85, 101, 103)] <- NA
+bvr <- lmer(bvr ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
-ndfa <- lmer(sqrt(ndfa) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
- 
 # Check model fit
-plot(ndfa)
-qqnorm(residuals(ndfa))
-qqline(residuals(ndfa))
-densityPlot(residuals(ndfa))
-shapiro.test(residuals(ndfa))
-outlierTest(ndfa)
+plot(bvr)
+qqnorm(residuals(bvr))
+qqline(residuals(bvr))
+densityPlot(residuals(bvr))
+shapiro.test(residuals(bvr))
+outlierTest(bvr)
 
 # Model results
-summary(ndfa)
-Anova(ndfa)
-r.squaredGLMM(ndfa)
+summary(bvr)
+Anova(bvr)
+r.squaredGLMM(bvr)
 
 # Pairwise comparisons
-test(emtrends(ndfa, ~inoc, "n.trt"))
-test(emtrends(ndfa, ~co2, "n.trt"))
-test(emtrends(ndfa, ~1, "n.trt"))
-emmeans(ndfa, pairwise~inoc)
+test(emtrends(bvr, ~1, "n.trt", type = "response"))
+test(emtrends(bvr, pairwise~inoc, "n.trt", type = "response"))
+test(emtrends(bvr, pairwise~co2, "n.trt", type = "response"))
 
+<<<<<<< HEAD
+emmeans(bvr, pairwise~co2, type = "response")
+emmeans(bvr, pairwise~inoc, type = "response")
+=======
 ##########################################################################
 ## Biomass : pot volume
 ##########################################################################
@@ -646,10 +802,12 @@ test(emtrends(bvr, pairwise~inoc, "n.trt"))
 test(emtrends(bvr, pairwise~co2, "n.trt"))
 test(emtrends(bvr, ~1, "n.trt"))
 emmeans(bvr, pairwise~inoc)
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
 
 ##########################################################################
 ## Table 1: Leaf N content
 ##########################################################################
+# Narea
 narea.coefs <- data.frame(summary(narea)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.narea = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -667,61 +825,14 @@ narea.table <- data.frame(Anova(narea)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.narea:pval.narea, round, digits = 3),
+         across(chisq.narea:pval.narea, \(x) round(x, digits = 3)),
          chisq.narea = ifelse(chisq.narea <0.001 & chisq.narea >= 0, 
                               "<0.001", chisq.narea),
          pval.narea = ifelse(pval.narea <0.001 & pval.narea >= 0, 
                              "<0.001", pval.narea)) %>%
   arrange(treatment)
 
-nmass.coefs <- data.frame(summary(nmass)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.nmass = format(Estimate, scientific = TRUE, digits = 3)) %>%
-  dplyr::select(treatment, coef.nmass) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  dplyr::select(treatment, coef.nmass) %>%
-  print(., row.names = FALSE)
-
-nmass.table <- data.frame(Anova(nmass)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(nmass.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.nmass, 
-                chisq.nmass = Chisq, pval.nmass = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment, 
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.nmass:pval.nmass, round, digits = 3),
-         chisq.nmass = ifelse(chisq.nmass <0.001 & chisq.nmass >= 0, 
-                              "<0.001", chisq.nmass),
-         pval.nmass = ifelse(pval.nmass <0.001 & pval.nmass >= 0, 
-                             "<0.001", pval.nmass)) %>%
-  arrange(treatment)
-
-marea.coefs <- data.frame(summary(marea)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.marea = format(Estimate, scientific = TRUE, digits = 3)) %>%
-  dplyr::select(treatment, coef.marea) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  dplyr::select(treatment, coef.marea) %>%
-  print(., row.names = FALSE)
-
-marea.table <- data.frame(Anova(marea)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(marea.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.marea, 
-                chisq.marea = Chisq, pval.marea = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment, 
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.marea:pval.marea, round, digits = 3),
-         chisq.marea = ifelse(chisq.marea <0.001 & chisq.marea >= 0, 
-                              "<0.001", chisq.marea),
-         pval.marea = ifelse(pval.marea <0.001 & pval.marea >= 0, 
-                             "<0.001", pval.marea)) %>%
-  arrange(treatment)
-
+# Chlarea
 chl.area.coefs <- data.frame(summary(chlarea)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.chl.area = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -739,20 +850,20 @@ chl.area.table <- data.frame(Anova(chlarea)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.chl.area:pval.chl.area, round, digits = 3),
+         across(chisq.chl.area:pval.chl.area, \(x) round(x, digits = 3)),
          chisq.chl.area = ifelse(chisq.chl.area <0.001 & chisq.chl.area >= 0, 
                               "<0.001", chisq.chl.area),
          pval.chl.area = ifelse(pval.chl.area <0.001 & pval.chl.area >= 0, 
                              "<0.001", pval.chl.area)) %>%
   arrange(treatment)
 
-table1 <- narea.table %>% full_join(nmass.table) %>% 
-  full_join(marea.table) %>% full_join(chl.area.table) %>%
+table1 <- narea.table %>% full_join(chl.area.table) %>%
   replace(is.na(.), "-")
 
 ##########################################################################
 ## Table 2: Gas exchange
 ##########################################################################
+# Anet,420
 anet420.coefs <- data.frame(summary(anet)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.anet420 = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -770,13 +881,14 @@ anet420.table <- data.frame(Anova(anet)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.anet420:pval.anet420, round, digits = 3),
+         across(chisq.anet420:pval.anet420, \(x) round(x, digits = 3)),
          chisq.anet420 = ifelse(chisq.anet420 < 0.001 & chisq.anet420 >= 0, 
                               "<0.001", chisq.anet420),
          pval.anet420 = ifelse(pval.anet420 < 0.001 & pval.anet420 >= 0, 
                              "<0.001", pval.anet420)) %>%
   arrange(treatment)
 
+# Anet,gc
 anetgrowth.coefs <- data.frame(summary(anet.growth)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.anetgrowth = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -794,13 +906,14 @@ anetgrowth.table <- data.frame(Anova(anet.growth)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.anetgrowth:pval.anetgrowth, round, digits = 3),
+         across(chisq.anetgrowth:pval.anetgrowth, \(x) round(x, digits = 3)),
          chisq.anetgrowth = ifelse(chisq.anetgrowth < 0.001 & chisq.anetgrowth >= 0, 
                                 "<0.001", chisq.anetgrowth),
          pval.anetgrowth = ifelse(pval.anetgrowth < 0.001 & pval.anetgrowth >= 0, 
                                "<0.001", pval.anetgrowth)) %>%
   arrange(treatment)
 
+# Vcmax25
 vcmax.coefs <- data.frame(summary(vcmax)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.vcmax = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -818,13 +931,14 @@ vcmax.table <- data.frame(Anova(vcmax)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.vcmax:pval.vcmax, round, digits = 3),
+         across(chisq.vcmax:pval.vcmax, \(x) round(x, digits = 3)),
          chisq.vcmax = ifelse(chisq.vcmax < 0.001 & chisq.vcmax >= 0, 
                               "<0.001", chisq.vcmax),
          pval.vcmax = ifelse(pval.vcmax < 0.001 & pval.vcmax >= 0, 
                              "<0.001", pval.vcmax)) %>%
   arrange(treatment)
 
+# Jmax25
 jmax.coefs <- data.frame(summary(jmax)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.jmax = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -842,13 +956,14 @@ jmax.table <- data.frame(Anova(jmax)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.jmax:pval.jmax, round, digits = 3),
+         across(chisq.jmax:pval.jmax, \(x) round(x, digits = 3)),
          chisq.jmax = ifelse(chisq.jmax < 0.001 & chisq.jmax >= 0, 
                               "<0.001", chisq.jmax),
          pval.jmax = ifelse(pval.jmax < 0.001 & pval.jmax >= 0, 
                              "<0.001", pval.jmax)) %>%
   arrange(treatment)
 
+# Jmax25: Vcmax25
 jvmax.coefs <- data.frame(summary(jvmax)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.jvmax = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -866,14 +981,181 @@ jvmax.table <- data.frame(Anova(jvmax)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.jvmax:pval.jvmax, round, digits = 3),
+         across(chisq.jvmax:pval.jvmax, \(x) round(x, digits = 3)),
          chisq.jvmax = ifelse(chisq.jvmax < 0.001 & chisq.jvmax >= 0, 
                              "<0.001", chisq.jvmax),
          pval.jvmax = ifelse(pval.jvmax < 0.001 & pval.jvmax >= 0, 
                             "<0.001", pval.jvmax)) %>%
   arrange(treatment)
 
+table2 <- anet420.table %>% full_join(anetgrowth.table) %>% 
+  full_join(vcmax.table) %>% full_join(jmax.table) %>%
+  full_join(jvmax.table) %>% replace(is.na(.), "-")
 
+##########################################################################
+## Table 3: Whole plant traits
+##########################################################################
+# Total leaf area
+tla.coefs <- data.frame(summary(tla)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.tla = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.tla) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  print(., row.names = FALSE)
+
+tla.table <- data.frame(Anova(tla)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(tla.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.tla, 
+                chisq.tla = Chisq, pval.tla = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.tla:pval.tla, \(x) round(x, digits = 3)),
+         chisq.tla = ifelse(chisq.tla <0.001 & chisq.tla >= 0, 
+                            "<0.001", chisq.tla),
+         pval.tla = ifelse(pval.tla <0.001 & pval.tla >= 0, 
+                           "<0.001", pval.tla)) %>%
+  arrange(treatment)
+
+# Total biomass
+tbio.coefs <- data.frame(summary(tbio)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.tbio = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.tbio) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  print(., row.names = FALSE)
+
+tbio.table <- data.frame(Anova(tbio)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(tbio.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.tbio, 
+                chisq.tbio = Chisq, pval.tbio = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.tbio:pval.tbio, \(x) round(x, digits = 3)),
+         chisq.tbio = ifelse(chisq.tbio < 0.001 & chisq.tbio >= 0, 
+                             "<0.001", chisq.tbio),
+         pval.tbio = ifelse(pval.tbio < 0.001 & pval.tbio >= 0, 
+                            "<0.001", pval.tbio)) %>%
+  arrange(treatment)
+
+# Carbon cost to acquire nitrogen
+rootshoot.coefs <- data.frame(summary(rootshoot)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.rootshoot = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.rootshoot) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  print(., row.names = FALSE)
+
+rootshoot.table <- data.frame(Anova(rootshoot)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(rootshoot.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.rootshoot, 
+                chisq.rootshoot = Chisq, pval.rootshoot = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.rootshoot:pval.rootshoot, \(x) round(x, digits = 3)),
+         chisq.rootshoot = ifelse(chisq.rootshoot <0.001 & chisq.rootshoot >= 0, 
+                              "<0.001", chisq.rootshoot),
+         pval.rootshoot = ifelse(pval.rootshoot <0.001 & pval.rootshoot >= 0, 
+                             "<0.001", pval.rootshoot)) %>%
+  arrange(treatment)
+
+# Carbon cost to acquire nitrogen
+ncost.coefs <- data.frame(summary(ncost)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.ncost = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.ncost) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  print(., row.names = FALSE)
+
+ncost.table <- data.frame(Anova(ncost)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(ncost.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.ncost, 
+                chisq.ncost = Chisq, pval.ncost = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.ncost:pval.ncost, \(x) round(x, digits = 3)),
+         chisq.ncost = ifelse(chisq.ncost <0.001 & chisq.ncost >= 0, 
+                              "<0.001", chisq.ncost),
+         pval.ncost = ifelse(pval.ncost <0.001 & pval.ncost >= 0, 
+                             "<0.001", pval.ncost)) %>%
+  arrange(treatment)
+
+table3 <- tla.table %>% full_join(tbio.table) %>%
+  full_join(rootshoot.table) %>%
+  full_join(ncost.table) %>%
+  replace(is.na(.), "-")
+
+##########################################################################
+## Table S3: Nmass, LMA
+##########################################################################
+# Nmass
+nmass.coefs <- data.frame(summary(nmass)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.nmass = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.nmass) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.nmass) %>%
+  print(., row.names = FALSE)
+
+nmass.table <- data.frame(Anova(nmass)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(nmass.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.nmass, 
+                chisq.nmass = Chisq, pval.nmass = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.nmass:pval.nmass, \(x) round(x, digits = 3)),
+         chisq.nmass = ifelse(chisq.nmass <0.001 & chisq.nmass >= 0, 
+                              "<0.001", chisq.nmass),
+         pval.nmass = ifelse(pval.nmass <0.001 & pval.nmass >= 0, 
+                             "<0.001", pval.nmass)) %>%
+  arrange(treatment)
+
+# Marea
+marea.coefs <- data.frame(summary(marea)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.marea = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.marea) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.marea) %>%
+  print(., row.names = FALSE)
+
+marea.table <- data.frame(Anova(marea)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(marea.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.marea, 
+                chisq.marea = Chisq, pval.marea = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.marea:pval.marea, \(x) round(x, digits = 3)),
+         chisq.marea = ifelse(chisq.marea <0.001 & chisq.marea >= 0, 
+                              "<0.001", chisq.marea),
+         pval.marea = ifelse(pval.marea <0.001 & pval.marea >= 0, 
+                             "<0.001", pval.marea)) %>%
+  arrange(treatment)
+
+tableS3 <- nmass.table %>% full_join(marea.table) %>%
+  replace(is.na(.), "-")
+
+##########################################################################
+## Table S4: Dark respiration, PNUE
+##########################################################################
+# Dark respiration
 rd25.coefs <- data.frame(summary(rd25)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.rd25 = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -891,27 +1173,21 @@ rd25.table <- data.frame(Anova(rd25)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.rd25:pval.rd25, round, digits = 3),
+         across(chisq.rd25:pval.rd25, \(x) round(x, digits = 3)),
          chisq.rd25 = ifelse(chisq.rd25 < 0.001 & chisq.rd25 >= 0, 
-                            "<0.001", chisq.rd25),
+                             "<0.001", chisq.rd25),
          pval.rd25 = ifelse(pval.rd25 < 0.001 & pval.rd25 >= 0, 
-                           "<0.001", pval.rd25)) %>%
+                            "<0.001", pval.rd25)) %>%
   arrange(treatment)
 
-table2 <- anet420.table %>% full_join(anetgrowth.table) %>% 
-  full_join(vcmax.table) %>% full_join(jmax.table) %>%
-  full_join(jvmax.table) %>% full_join(rd25.table) %>%
-  replace(is.na(.), "-")
-
-##########################################################################
-## Table 3: PNUE/iWUE
-##########################################################################
+# PNUEgc
 pnue.coefs <- data.frame(summary(pnue)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.pnue = format(Estimate, scientific = TRUE, digits = 3)) %>%
   dplyr::select(treatment, coef.pnue) %>%
   mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.pnue) %>%
   print(., row.names = FALSE)
 
 pnue.table <- data.frame(Anova(pnue)) %>%
@@ -922,143 +1198,128 @@ pnue.table <- data.frame(Anova(pnue)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.pnue:pval.pnue, round, digits = 3),
+         across(chisq.pnue:pval.pnue, \(x) round(x, digits = 3)),
          chisq.pnue = ifelse(chisq.pnue < 0.001 & chisq.pnue >= 0, 
-                              "<0.001", chisq.pnue),
+                             "<0.001", chisq.pnue),
          pval.pnue = ifelse(pval.pnue < 0.001 & pval.pnue >= 0, 
-                             "<0.001", pval.pnue)) %>%
+                            "<0.001", pval.pnue)) %>%
   arrange(treatment)
 
-chi.coefs <- data.frame(summary(chi)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.chi = format(Estimate, scientific = TRUE, digits = 3)) %>%
-  dplyr::select(treatment, coef.chi) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  print(., row.names = FALSE)
-
-chi.table <- data.frame(Anova(chi)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(chi.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.chi, 
-                chisq.chi = Chisq, pval.chi = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment, 
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.chi:pval.chi, round, digits = 3),
-         chisq.chi = ifelse(chisq.chi < 0.001 & chisq.chi >= 0, 
-                             "<0.001", chisq.chi),
-         pval.chi = ifelse(pval.chi < 0.001 & pval.chi >= 0, 
-                            "<0.001", pval.chi)) %>%
-  arrange(treatment)
-
-table3 <- pnue.table %>% full_join(chi.table) %>% replace(is.na(.), "-")
-
-##########################################################################
-## Table 4: Whole plant traits
-##########################################################################
-tla.coefs <- data.frame(summary(tla)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.tla = format(Estimate, scientific = TRUE, digits = 3)) %>%
-  dplyr::select(treatment, coef.tla) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  print(., row.names = FALSE)
-
-tla.table <- data.frame(Anova(tla)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(tla.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.tla, 
-                chisq.tla = Chisq, pval.tla = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment, 
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.tla:pval.tla, round, digits = 3),
-         chisq.tla = ifelse(chisq.tla <0.001 & chisq.tla >= 0, 
-                            "<0.001", chisq.tla),
-         pval.tla = ifelse(pval.tla <0.001 & pval.tla >= 0, 
-                           "<0.001", pval.tla)) %>%
-  arrange(treatment)
-
-tbio.coefs <- data.frame(summary(tbio)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.tbio = format(Estimate, scientific = TRUE, digits = 3)) %>%
-  dplyr::select(treatment, coef.tbio) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  print(., row.names = FALSE)
-
-tbio.table <- data.frame(Anova(tbio)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(tbio.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.tbio, 
-                chisq.tbio = Chisq, pval.tbio = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment, 
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.tbio:pval.tbio, round, digits = 3),
-         chisq.tbio = ifelse(chisq.tbio < 0.001 & chisq.tbio >= 0, 
-                             "<0.001", chisq.tbio),
-         pval.tbio = ifelse(pval.tbio < 0.001 & pval.tbio >= 0, 
-                            "<0.001", pval.tbio)) %>%
-  arrange(treatment)
-
-ncost.coefs <- data.frame(summary(ncost)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.ncost = format(Estimate, scientific = TRUE, digits = 3)) %>%
-  dplyr::select(treatment, coef.ncost) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  print(., row.names = FALSE)
-
-ncost.table <- data.frame(Anova(ncost)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(ncost.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.ncost, 
-                chisq.ncost = Chisq, pval.ncost = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment, 
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.ncost:pval.ncost, round, digits = 3),
-         chisq.ncost = ifelse(chisq.ncost <0.001 & chisq.ncost >= 0, 
-                              "<0.001", chisq.ncost),
-         pval.ncost = ifelse(pval.ncost <0.001 & pval.ncost >= 0, 
-                             "<0.001", pval.ncost)) %>%
-  arrange(treatment)
-
-ndfa.coefs <- data.frame(summary(ndfa)$coefficient) %>%
-  mutate(treatment = row.names(.),
-         coef.ndfa = format(Estimate, scientific = TRUE, digits = 3),
-         se.ndfa = round(Std..Error, digits = 3),
-         t.value.ndfa = round(t.value, digits = 3)) %>%
-  dplyr::select(treatment, coef.ndfa, se.ndfa, t.value.ndfa) %>%
-  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
-  dplyr::select(treatment, coef.ndfa) %>%
-  print(., row.names = FALSE)
-
-ndfa.table <- data.frame(Anova(ndfa)) %>%
-  mutate(treatment = row.names(.)) %>%
-  full_join(ndfa.coefs) %>%
-  dplyr::select(treatment, df = Df, coef.ndfa,
-                chisq.ndfa = Chisq, pval.ndfa = Pr..Chisq.) %>%
-  mutate(treatment = factor(treatment,
-                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
-                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.ndfa:pval.ndfa, round, digits = 3),
-         chisq.ndfa = ifelse(chisq.ndfa < 0.001 & chisq.ndfa >= 0,
-                             "<0.001", chisq.ndfa),
-         pval.ndfa = ifelse(pval.ndfa < 0.001 & pval.ndfa >= 0,
-                            "<0.001", pval.ndfa)) %>%
-  arrange(treatment)
-
-table4 <- tla.table %>% full_join(tbio.table) %>%
-  full_join(ncost.table) %>% full_join(ndfa.table) %>%
+tableS4 <- rd25.table %>% full_join(pnue.table) %>%
   replace(is.na(.), "-")
 
 ##########################################################################
-## Table S3: Components of Ncost
+## Table S5: LAR, biomass partitioning
 ##########################################################################
+# Leaf area ratio
+lar.coefs <- data.frame(summary(lar)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.lar = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.lar) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.lar) %>%
+  print(., row.names = FALSE)
+
+lar.table <- data.frame(Anova(lar)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(lar.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.lar, 
+                chisq.lar = Chisq, pval.lar = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.lar:pval.lar, \(x) round(x, digits = 3)),
+         chisq.lar = ifelse(chisq.lar < 0.001 & chisq.lar >= 0, 
+                             "<0.001", chisq.lar),
+         pval.lar = ifelse(pval.lar < 0.001 & pval.lar >= 0, 
+                            "<0.001", pval.lar)) %>%
+  arrange(treatment)
+
+# Leaf mass fraction
+lmf.coefs <- data.frame(summary(lmf)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.lmf = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.lmf) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.lmf) %>%
+  print(., row.names = FALSE)
+
+lmf.table <- data.frame(Anova(lmf)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(lmf.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.lmf, 
+                chisq.lmf = Chisq, pval.lmf = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.lmf:pval.lmf, \(x) round(x, digits = 3)),
+         chisq.lmf = ifelse(chisq.lmf < 0.001 & chisq.lmf >= 0, 
+                            "<0.001", chisq.lmf),
+         pval.lmf = ifelse(pval.lmf < 0.001 & pval.lmf >= 0, 
+                           "<0.001", pval.lmf)) %>%
+  arrange(treatment)
+
+# Stem mass fraction
+smf.coefs <- data.frame(summary(smf)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.smf = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.smf) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.smf) %>%
+  print(., row.names = FALSE)
+
+smf.table <- data.frame(Anova(smf)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(smf.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.smf, 
+                chisq.smf = Chisq, pval.smf = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.smf:pval.smf, \(x) round(x, digits = 3)),
+         chisq.smf = ifelse(chisq.smf < 0.001 & chisq.smf >= 0, 
+                            "<0.001", chisq.smf),
+         pval.smf = ifelse(pval.smf < 0.001 & pval.smf >= 0, 
+                           "<0.001", pval.smf)) %>%
+  arrange(treatment)
+
+# Root mass fraction
+rmf.coefs <- data.frame(summary(rmf)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.rmf = format(Estimate, scientific = TRUE, digits = 3)) %>%
+  dplyr::select(treatment, coef.rmf) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.rmf) %>%
+  print(., row.names = FALSE)
+
+rmf.table <- data.frame(Anova(rmf)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(rmf.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.rmf, 
+                chisq.rmf = Chisq, pval.rmf = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.rmf:pval.rmf, \(x) round(x, digits = 3)),
+         chisq.rmf = ifelse(chisq.rmf < 0.001 & chisq.rmf >= 0, 
+                            "<0.001", chisq.rmf),
+         pval.rmf = ifelse(pval.rmf < 0.001 & pval.rmf >= 0, 
+                           "<0.001", pval.rmf)) %>%
+  arrange(treatment)
+
+tableS5 <- lar.table %>% full_join(lmf.table) %>%
+  full_join(smf.table) %>% full_join(rmf.table) %>%
+  replace(is.na(.), "-")
+
+
+##########################################################################
+## Table S6: Components of Ncost
+##########################################################################
+# Belowground carbon allocation
 cbg.coefs <- data.frame(summary(cbg)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.cbg = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -1075,13 +1336,14 @@ cbg.table <- data.frame(Anova(cbg)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.cbg:pval.cbg, round, digits = 3),
+         across(chisq.cbg:pval.cbg, \(x) round(x, digits = 3)),
          chisq.cbg = ifelse(chisq.cbg <0.001 & chisq.cbg >= 0, 
                             "<0.001", chisq.cbg),
          pval.cbg = ifelse(pval.cbg <0.001 & pval.cbg >= 0, 
                            "<0.001", pval.cbg)) %>%
   arrange(treatment)
 
+# Whole-plant nitrogen biomass
 wpn.coefs <- data.frame(summary(wpn)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.wpn = format(Estimate, scientific = TRUE, digits = 3)) %>%
@@ -1098,18 +1360,19 @@ wpn.table <- data.frame(Anova(wpn)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.wpn:pval.wpn, round, digits = 3),
+         across(chisq.wpn:pval.wpn, \(x) round(x, digits = 3)),
          chisq.wpn = ifelse(chisq.wpn <0.001 & chisq.wpn >= 0, 
                             "<0.001", chisq.wpn),
          pval.wpn = ifelse(pval.wpn <0.001 & pval.wpn >= 0, 
                            "<0.001", pval.wpn)) %>%
   arrange(treatment)
 
-tableS3 <- cbg.table %>% full_join(wpn.table) %>% replace(is.na(.), "-")
+tableS6 <- cbg.table %>% full_join(wpn.table) %>% replace(is.na(.), "-")
 
 ##########################################################################
-## Table S4: Nitrogen fixation
+## Table S7: Nitrogen fixation
 ##########################################################################
+# Root nodule: root biomass
 nodroot.coefs <- data.frame(summary(nod.root.ratio)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.nodroot = format(Estimate, scientific = TRUE, digits = 3),
@@ -1129,13 +1392,14 @@ nodroot.table <- data.frame(Anova(nod.root.ratio)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.nodroot:pval.nodroot, round, digits = 3),
+         across(chisq.nodroot:pval.nodroot, \(x) round(x, digits = 3)),
          chisq.nodroot = ifelse(chisq.nodroot <0.001 & chisq.nodroot >= 0, 
                                 "<0.001", chisq.nodroot),
          pval.nodroot = ifelse(pval.nodroot <0.001 & pval.nodroot >= 0, 
                                "<0.001", pval.nodroot)) %>%
   arrange(treatment)
 
+## Root nodule biomass
 nodbio.coefs <- data.frame(summary(nod.bio)$coefficient) %>%
   mutate(treatment = row.names(.),
          coef.nodbio = format(Estimate, scientific = TRUE, digits = 3),
@@ -1155,11 +1419,69 @@ nodbio.table <- data.frame(Anova(nod.bio)) %>%
   mutate(treatment = factor(treatment, 
                             levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
                                        "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
-         across(chisq.nodbio:pval.nodbio, round, digits = 3),
+         across(chisq.nodbio:pval.nodbio, \(x) round(x, digits = 3)),
          chisq.nodbio = ifelse(chisq.nodbio <0.001 & chisq.nodbio >= 0, 
                                "<0.001", chisq.nodbio),
          pval.nodbio = ifelse(pval.nodbio <0.001 & pval.nodbio >= 0, 
                               "<0.001", pval.nodbio)) %>%
   arrange(treatment)
 
-tableS4 <- nodbio.table %>% full_join(nodroot.table) %>% replace(is.na(.), "-")
+## Root biomass 
+rootbio.coefs <- data.frame(summary(root.bio)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.rootbio = format(Estimate, scientific = TRUE, digits = 3),
+         se.rootbio = round(Std..Error, digits = 3),
+         t.value.rootbio = round(t.value, digits = 3)) %>%
+  dplyr::select(treatment, coef.rootbio, se.rootbio, t.value.rootbio) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.rootbio) %>%
+  print(., row.names = FALSE)
+
+rootbio.table <- data.frame(Anova(nod.bio)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(rootbio.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.rootbio, 
+                chisq.rootbio = Chisq, pval.rootbio = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.rootbio:pval.rootbio, \(x) round(x, digits = 3)),
+         chisq.rootbio = ifelse(chisq.rootbio <0.001 & chisq.rootbio >= 0, 
+                               "<0.001", chisq.rootbio),
+         pval.rootbio = ifelse(pval.rootbio <0.001 & pval.rootbio >= 0, 
+                              "<0.001", pval.rootbio)) %>%
+  arrange(treatment)
+
+tableS7 <- nodroot.table %>% full_join(nodbio.table) %>% 
+  full_join(rootbio.table) %>% replace(is.na(.), "-")
+
+##########################################################################
+## Table S8: BVR
+##########################################################################
+# Biomass: pot volume
+bvr.coefs <- data.frame(summary(bvr)$coefficient) %>%
+  mutate(treatment = row.names(.),
+         coef.bvr = format(Estimate, scientific = TRUE, digits = 3),
+         se.bvr = round(Std..Error, digits = 3),
+         t.value.bvr = round(t.value, digits = 3)) %>%
+  dplyr::select(treatment, coef.bvr, se.bvr, t.value.bvr) %>%
+  mutate(treatment = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")) %>%
+  dplyr::select(treatment, coef.bvr) %>%
+  print(., row.names = FALSE)
+
+bvr.table <- data.frame(Anova(bvr)) %>%
+  mutate(treatment = row.names(.)) %>%
+  full_join(bvr.coefs) %>%
+  dplyr::select(treatment, df = Df, coef.bvr, 
+                chisq.bvr = Chisq, pval.bvr = Pr..Chisq.) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("(Intercept)", "co2", "inoc", "n.trt", "co2:inoc",
+                                       "co2:n.trt", "inoc:n.trt", "co2:inoc:n.trt")),
+         across(chisq.bvr:pval.bvr, \(x) round(x, digits = 3)),
+         chisq.bvr = ifelse(chisq.bvr <0.001 & chisq.bvr >= 0, 
+                                "<0.001", chisq.bvr),
+         pval.bvr = ifelse(pval.bvr <0.001 & pval.bvr >= 0, 
+                               "<0.001", pval.bvr)) %>%
+  arrange(treatment)

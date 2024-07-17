@@ -5,6 +5,7 @@
 ##########################################################################
 # Libraries
 library(lme4)
+library(car)
 library(emmeans)
 library(tidyverse)
 library(ggpubr)
@@ -23,10 +24,14 @@ df <- read.csv("../data/NxCO2xI_data.csv",
   unite(col = "co2.inoc", co2:inoc, sep = "_", remove = FALSE) %>%
   mutate(co2.inoc = factor(co2.inoc,
                            levels = c("elv_inoc", "elv_no.inoc",
-                                      "amb_inoc", "amb_no.inoc")))
+                                      "amb_inoc", "amb_no.inoc")),
+         lar = tla / total.biomass,
+         lmf = leaf.biomass / total.biomass,
+         smf = stem.biomass / total.biomass,
+         rmf = root.biomass / total.biomass,
+         root.shoot.ratio = root.biomass / (leaf.biomass + stem.biomass))
 
 ## Add colorblind friendly palette
-co2.cols <- c("#2166ac", "#b2182b")
 co2.cols <- c("#2166ac", "#b2182b")
 full.cols <- c("#b2182b", "#f4a582", "#2166ac", "#92c5d3")
 
@@ -276,8 +281,7 @@ marea.plot <- ggplot(data = df,
 marea.plot
 
 ##########################################################################
-## Marea regression line prep for co2-by-inoculation interaction plot 
-## in supplement
+## Marea regression line prep for co2-by-inoculation interaction
 ##########################################################################
 test(emtrends(marea, pairwise~co2, "n.trt"))
 
@@ -287,7 +291,7 @@ marea.int.regline <- data.frame(emmeans(marea, ~co2, "n.trt",
                                         type = "response"))
 
 ##########################################################################
-## Marea co2-by-inoculation interaction plot in supplement
+## Marea co2-by-inoculation interaction plot
 ##########################################################################
 marea.int.plot <- ggplot(data = df, aes(x = n.trt, y = marea, fill = co2)) +
   geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
@@ -426,7 +430,7 @@ anet.plot <- ggplot(data = df,
 anet.plot
 
 ##########################################################################
-## Anet,growth regression line prep
+## Anet,gc regression line prep
 ##########################################################################
 anet.growth <- lmer(anet.growth ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 test(emtrends(anet.growth, ~co2*inoc, "n.trt"))
@@ -442,7 +446,7 @@ anet.growth.regline <- data.frame(emmeans(anet.growth, ~co2*inoc, "n.trt",
                                       "amb_inoc", "amb_no.inoc")))
 
 ##########################################################################
-## Anet.growth plot
+## Anet,gc plot
 ##########################################################################
 anet.growth.plot <- ggplot(data = df, 
                     aes(x = n.trt, y = anet.growth, fill = co2.inoc)) +
@@ -469,7 +473,7 @@ anet.growth.plot <- ggplot(data = df,
   scale_linetype_manual(values = c("dashed", "solid")) +
   scale_y_continuous(limits = c(0, 40), breaks = seq(0, 40, 10)) +
   labs(x = "Soil N fertilization (ppm)",
-       y = expression(bold(italic("A")["net,growth"]*" ("*mu*"mol m"^"-2"*" s"^"-1"*")")),
+       y = expression(bold(italic("A")["net,gc"]*" ("*mu*"mol m"^"-2"*" s"^"-1"*")")),
        fill = "Treatment", color = "Treatment", shape = "Inoculation") +
   theme_bw(base_size = 18) +
   theme(legend.title = element_text(face = "bold"),
@@ -750,7 +754,7 @@ pnue.plot <- ggplot(data = df,
   scale_y_continuous(limits = c(0, 30), breaks = seq(0, 30, 6)) +
   scale_linetype_manual(values = c("dashed", "solid")) +
   labs(x = "Soil N fertilization (ppm)",
-       y = expression(bold(italic("PNUE")*" ("*mu*"mol CO"["2"]*" g"^"-1"*" N s"^"-1"*")")),
+       y = expression(bold(italic("PNUE")["gc"]*" ("*mu*"mol CO"["2"]*" g"^"-1"*" N s"^"-1"*")")),
        fill = "Treatment", color = "Treatment") +
   theme_bw(base_size = 18) +
   theme(axis.title = element_text(face = "bold"),
@@ -763,8 +767,7 @@ pnue.plot <- ggplot(data = df,
 pnue.plot
 
 ##########################################################################
-## PNUE regression line prep for co2-by-inoculation interaction plot 
-## in supplement
+## PNUE regression line prep for co2-by-inoculation interaction
 ##########################################################################
 test(emtrends(pnue, pairwise~co2, "n.trt"))
 
@@ -775,7 +778,7 @@ pnue.int.regline <- data.frame(emmeans(pnue, ~co2, "n.trt",
   mutate(linetype = ifelse(co2 == "amb", "dashed", "solid"))
 
 ##########################################################################
-## PNUE co2-by-inoculation interaction plot in supplement
+## PNUE co2-by-inoculation interaction plot
 ##########################################################################
 pnue.int.plot <- ggplot(data = df, aes(x = n.trt, y = pnue.growth, fill = co2)) +
   geom_point(aes(shape = inoc), size = 3, alpha = 0.75) +
@@ -795,7 +798,7 @@ pnue.int.plot <- ggplot(data = df, aes(x = n.trt, y = pnue.growth, fill = co2)) 
   scale_linetype_manual(values = c("dashed", "solid")) +
   scale_y_continuous(limits = c(0, 30), breaks = seq(0, 30, 6)) +
   labs(x = "Soil N fertilization (ppm)",
-       y = expression(bold(italic("PNUE")*" ("*mu*"mol CO"["2"]*" g"^"-1"*" N s"^"-1"*")")),
+       y = expression(bold(italic("PNUE")["gc"]*" ("*mu*"mol CO"["2"]*" g"^"-1"*" N s"^"-1"*")")),
        fill = expression(bold("CO"["2"])),
        color = expression(bold("CO"["2"])),
        shape = "Inoculation") +
@@ -806,61 +809,6 @@ pnue.int.plot <- ggplot(data = df, aes(x = n.trt, y = pnue.growth, fill = co2)) 
   guides(linetype = "none",
          fill = guide_legend(override.aes = list(shape = 21)))
 pnue.int.plot
-
-##########################################################################
-## chi regression line prep
-##########################################################################
-chi <- lmer(chi ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
-test(emtrends(chi, ~co2*inoc, "n.trt"))
-
-## Emmean fxns for regression lines + error ribbons
-chi.regline <- data.frame(emmeans(chi, ~co2*inoc, "n.trt",
-                                  at = list(n.trt = seq(0, 630, 5)),
-                                  type = "response")) %>%
-  mutate(co2.inoc = str_c(co2, "_", inoc),
-         linetype = ifelse(co2.inoc == "amb_inoc", "dashed", "solid"),
-         co2.inoc = factor(co2.inoc, 
-                           levels = c("elv_inoc","elv_no.inoc", 
-                                      "amb_inoc", "amb_no.inoc")))
-
-##########################################################################
-## chi plot
-##########################################################################
-chi.plot <- ggplot(data = df, 
-                   aes(x = n.trt, y = chi, fill = co2.inoc)) +
-  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
-  geom_smooth(data = chi.regline,
-              aes(linetype = linetype, color = co2.inoc, y = emmean), 
-              linewidth = 1.5, se = FALSE) +
-  geom_ribbon(data = chi.regline,
-              aes(fill = co2.inoc, y = emmean, 
-                  ymin = lower.CL, ymax = upper.CL), 
-              linewidth = 1.5, alpha = 0.25) +
-  scale_color_manual(values = full.cols,
-                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
-                                expression("Elevated CO"["2"]*", uninoculated"),
-                                expression("Ambient CO"["2"]*", inoculated"),
-                                expression("Ambient CO"["2"]*", uninoculated"))) +
-  scale_fill_manual(values = full.cols,
-                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
-                               expression("Elevated CO"["2"]*", uninoculated"),
-                               expression("Ambient CO"["2"]*", inoculated"),
-                               expression("Ambient CO"["2"]*", uninoculated"))) +
-  scale_shape_manual(values = c(21, 24), 
-                     labels = c("Uninoculated", "Inoculated")) +
-  scale_y_continuous(limits = c(0.49, 0.75), breaks = seq(0.5, 0.75, 0.05)) +
-  scale_linetype_manual(values = c("dashed", "solid")) +
-  labs(x = "Soil N fertilization (ppm)",
-       y = expression(bold(chi*" (unitless)")),
-       fill = "Treatment", color = "Treatment") +
-  theme_bw(base_size = 18) +
-  theme(legend.title = element_text(face = "bold"),
-        axis.title = element_text(face = "bold"),
-        panel.border = element_rect(linewidth = 1.25),
-        legend.text.align = 0) +
-  guides(linetype = "none", shape = "none",
-         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
-chi.plot
 
 ##########################################################################
 ## Total leaf area regression line prep
@@ -971,6 +919,125 @@ tbio.plot <- ggplot(data = df,
 tbio.plot
 
 ##########################################################################
+## LAR regression line prep
+##########################################################################
+df$lar[c(101, 112)] <- NA
+
+lar <- lmer(sqrt(lar) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+Anova(lar)
+
+test(emtrends(lar, ~co2*inoc, "n.trt"))
+
+## Emmean fxns for regression lines + error ribbons
+lar.regline <- data.frame(emmeans(lar, ~co2*inoc, "n.trt",
+                                   at = list(n.trt = seq(0, 630, 5)),
+                                   type = "response")) %>%
+  mutate(co2.inoc = str_c(co2, "_", inoc),
+         co2.inoc = factor(co2.inoc, 
+                           levels = c("elv_inoc","elv_no.inoc", 
+                                      "amb_inoc", "amb_no.inoc")),
+         linetype = ifelse(co2 == "elv" & inoc == "inoc", "solid", "dashed"))
+
+##########################################################################
+## Leaf area ratio plot
+##########################################################################
+lar.plot <- ggplot(data = df,
+                    aes(x = n.trt, y = lar, fill = co2.inoc)) +
+  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
+  geom_smooth(data = lar.regline,
+              aes(color = co2.inoc, y = response, linetype = linetype), 
+              linewidth = 1.5, se = FALSE) +
+  geom_ribbon(data = lar.regline,
+              aes(fill = co2.inoc, y = response, 
+                  ymin = lower.CL, ymax = upper.CL), 
+              linewidth = 1.5, alpha = 0.25) +
+  scale_color_manual(values = full.cols,
+                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                                expression("Elevated CO"["2"]*", uninoculated"),
+                                expression("Ambient CO"["2"]*", inoculated"),
+                                expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_fill_manual(values = full.cols,
+                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                               expression("Elevated CO"["2"]*", uninoculated"),
+                               expression("Ambient CO"["2"]*", inoculated"),
+                               expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_shape_manual(values = c(21, 24), 
+                     labels = c("Uninoculated", "Inoculated")) +
+  scale_y_continuous(limits = c(40, 120), breaks = seq(40, 120, 40)) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  labs(x = "Soil N fertilization (ppm)",
+       y = expression(bold("Leaf area ratio (cm"^"2"*" g"^"-1"*")")),
+       fill = "Treatment", color = "Treatment") +
+  theme_bw(base_size = 18) +
+  theme(legend.title = element_text(face = "bold"),
+        axis.title = element_text(face = "bold"),
+        panel.border = element_rect(linewidth = 1.25),
+        legend.text.align = 0) +
+  guides(linetype = "none", shape = "none",
+         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
+lar.plot
+
+##########################################################################
+## Root:shoot regression line prep
+##########################################################################
+df$root.shoot.ratio[c(101)] <- NA
+
+rootshoot <- lmer(log(root.shoot.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), 
+                  data = df)
+Anova(rootshoot)
+test(emtrends(rootshoot, ~co2*inoc, "n.trt"))
+
+
+## Emmean fxns for regression lines + error ribbons
+rootshoot.regline <- data.frame(emmeans(rootshoot, ~co2*inoc, "n.trt",
+                                  at = list(n.trt = seq(0, 630, 5)),
+                                  type = "response")) %>%
+  mutate(co2.inoc = str_c(co2, "_", inoc),
+         co2.inoc = factor(co2.inoc, 
+                           levels = c("elv_inoc","elv_no.inoc", 
+                                      "amb_inoc", "amb_no.inoc")),
+         linetype = ifelse(inoc == "inoc", "dashed", "solid"))
+
+##########################################################################
+## Leaf mass fraction plot
+##########################################################################
+rootshoot.plot <- ggplot(data = df,
+                   aes(x = n.trt, y = root.shoot.ratio, fill = co2.inoc)) +
+  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
+  geom_smooth(data = rootshoot.regline,
+              aes(color = co2.inoc, y = response, linetype = linetype), 
+              linewidth = 1.5, se = FALSE) +
+  geom_ribbon(data = rootshoot.regline,
+              aes(fill = co2.inoc, y = response, 
+                  ymin = lower.CL, ymax = upper.CL), 
+              linewidth = 1.5, alpha = 0.25) +
+  scale_color_manual(values = full.cols,
+                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                                expression("Elevated CO"["2"]*", uninoculated"),
+                                expression("Ambient CO"["2"]*", inoculated"),
+                                expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_fill_manual(values = full.cols,
+                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                               expression("Elevated CO"["2"]*", uninoculated"),
+                               expression("Ambient CO"["2"]*", inoculated"),
+                               expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_shape_manual(values = c(21, 24), 
+                     labels = c("Uninoculated", "Inoculated")) +
+  scale_y_continuous(limits = c(0, 2), breaks = seq(0, 2, 0.5)) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  labs(x = "Soil N fertilization (ppm)",
+       y = "Root: shoot ratio",
+       fill = "Treatment", color = "Treatment") +
+  theme_bw(base_size = 18) +
+  theme(legend.title = element_text(face = "bold"),
+        axis.title = element_text(face = "bold"),
+        panel.border = element_rect(linewidth = 1.25),
+        legend.text.align = 0) +
+  guides(linetype = "none", shape = "none",
+         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
+rootshoot.plot
+
+##########################################################################
 ## Ncost regression line prep
 ##########################################################################
 df$ncost[c(100, 101)] <- NA
@@ -1030,63 +1097,7 @@ ncost.plot <- ggplot(data = df, aes(x = n.trt, y = ncost, fill = co2.inoc)) +
 ncost.plot
 
 ##########################################################################
-## %Ndfa regression line prep
-##########################################################################
-df$ndfa[c(38, 85, 101, 103)] <- NA
-ndfa <- lmer(sqrt(ndfa) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
-test(emtrends(ndfa, ~co2*inoc, "n.trt"))
-
-## Emmean fxns for regression lines + error ribbons
-ndfa.regline <- data.frame(emmeans(ndfa, ~co2*inoc, "n.trt",
-                                   at = list(n.trt = seq(0, 630, 5)),
-                                   type = "response")) %>%
-  mutate(co2.inoc = str_c(co2, "_", inoc),
-         linetype = ifelse(inoc == "no.inoc", "dashed", "solid"),
-         co2.inoc = factor(co2.inoc, 
-                           levels = c("elv_inoc","elv_no.inoc", 
-                                      "amb_inoc", "amb_no.inoc")))
-
-##########################################################################
-## %Ndfa plot
-##########################################################################
-ndfa.plot <- ggplot(data = df, 
-                    aes(x = n.trt,  y = ndfa, fill = co2.inoc)) +
-  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
-  geom_smooth(data = ndfa.regline,
-              aes(color = co2.inoc, y = response, linetype = linetype), 
-              linewidth = 1.5, se = FALSE) +
-  geom_ribbon(data = ndfa.regline,
-              aes(fill = co2.inoc, y = response,
-                  ymin = lower.CL, ymax = upper.CL), 
-              linewidth = 1.5, alpha = 0.25) +
-  scale_color_manual(values = full.cols,
-                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
-                                expression("Elevated CO"["2"]*", uninoculated"),
-                                expression("Ambient CO"["2"]*", inoculated"),
-                                expression("Ambient CO"["2"]*", uninoculated"))) +
-  scale_fill_manual(values = full.cols,
-                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
-                               expression("Elevated CO"["2"]*", uninoculated"),
-                               expression("Ambient CO"["2"]*", inoculated"),
-                               expression("Ambient CO"["2"]*", uninoculated"))) +
-  scale_shape_manual(values = c(21, 24), 
-                     labels = c("Uninoculated", "Inoculated")) +
-  scale_y_continuous(limits = c(0, 105), breaks = seq(0, 100, 25)) +
-  scale_linetype_manual(values = c("dashed", "solid")) +
-  labs(x = "Soil N fertilization (ppm)",
-       y = expression(bold("%N"["dfa"])),
-       fill = "Treatment", color = "Treatment") +
-  theme_bw(base_size = 18) +
-  theme(legend.title = element_text(face = "bold"),
-        axis.title = element_text(face = "bold"),
-        panel.border = element_rect(linewidth = 1.25),
-        legend.text.align = 0) +
-  guides(linetype = "none", shape = "none",
-         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
-ndfa.plot
-
-##########################################################################
-## Belowground C allocation regression line prep for plot in supplement
+## Belowground C allocation regression line prep
 ##########################################################################
 cbg <- lmer(log(cbg) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 test(emtrends(cbg, ~co2*inoc, "n.trt"))
@@ -1101,7 +1112,7 @@ cbg.regline <- data.frame(emmeans(cbg, ~co2*inoc, "n.trt",
                                       "amb_inoc", "amb_no.inoc")))
 
 ##########################################################################
-## Belowground C allocation plot in supplement
+## Belowground C allocation plot
 ##########################################################################
 cbg.plot <- ggplot(data = df, aes(x = n.trt, y = cbg, fill = co2.inoc)) +
   geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
@@ -1138,7 +1149,7 @@ cbg.plot <- ggplot(data = df, aes(x = n.trt, y = cbg, fill = co2.inoc)) +
 cbg.plot
 
 ##########################################################################
-## Whole-plant nitrogen biomass regression line prep for plot in supplement
+## Whole-plant nitrogen biomass regression line prep
 ##########################################################################
 nwp <- lmer(sqrt(wpn) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 test(emtrends(nwp, ~co2*inoc, "n.trt"))
@@ -1153,7 +1164,7 @@ nwp.regline <- data.frame(emmeans(nwp, ~co2*inoc, "n.trt",
                                       "amb_inoc", "amb_no.inoc")))
 
 ##########################################################################
-## Nwp plot in supplement
+## Nwp plot
 ##########################################################################
 nwp.plot <- ggplot(data = df, aes(x = n.trt, y = wpn, fill = co2.inoc)) +
   geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
@@ -1189,73 +1200,15 @@ nwp.plot <- ggplot(data = df, aes(x = n.trt, y = wpn, fill = co2.inoc)) +
 nwp.plot
 
 ##########################################################################
-## Root nodule biomass regression line prep for plot in supplement
-##########################################################################
-df$nodule.biomass[80] <- NA
-
-nod <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
-test(emtrends(nod, ~co2, "n.trt"))
-test(emtrends(nod, ~inoc, "n.trt"))
-
-## Emmean fxns for regression lines + error ribbons
-nod.regline <- data.frame(emmeans(nod, ~co2*inoc, "n.trt",
-                                  at = list(n.trt = seq(0, 630, 5)),
-                                  type = "response")) %>%
-  mutate(co2.inoc = str_c(co2, "_", inoc),
-         linetype = ifelse(inoc == "no.inoc", "dashed", "solid"),
-         co2.inoc = factor(co2.inoc, 
-                           levels = c("elv_inoc","elv_no.inoc", 
-                                      "amb_inoc", "amb_no.inoc")))
-
-##########################################################################
-## Root nodule biomass plot in supplement
-##########################################################################
-nod.plot <- ggplot(data = df, 
-                   aes(x = n.trt, y = nodule.biomass, fill = co2.inoc)) +
-  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
-  geom_smooth(data = nod.regline,
-              aes(color = co2.inoc, y = response, linetype = linetype), 
-              linewidth = 1.5, se = FALSE) +
-  geom_ribbon(data = nod.regline,
-              aes(fill = co2.inoc, y = response,
-                  ymin = lower.CL, ymax = upper.CL), 
-              linewidth = 1.5, alpha = 0.25) +
-  scale_color_manual(values = full.cols,
-                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
-                                expression("Elevated CO"["2"]*", uninoculated"),
-                                expression("Ambient CO"["2"]*", inoculated"),
-                                expression("Ambient CO"["2"]*", uninoculated"))) +
-  scale_fill_manual(values = full.cols,
-                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
-                               expression("Elevated CO"["2"]*", uninoculated"),
-                               expression("Ambient CO"["2"]*", inoculated"),
-                               expression("Ambient CO"["2"]*", uninoculated"))) +
-  scale_shape_manual(values = c(21, 24), 
-                     labels = c("Uninoculated", "Inoculated")) +
-  scale_y_continuous(limits = c(-0.01, 0.6), breaks = seq(0, 0.6, 0.15)) +
-  scale_linetype_manual(values = c("dashed", "solid")) +
-  labs(x = "Soil N fertilization (ppm)",
-       y = "Nodule biomass (g)",
-       fill = "Treatment", color = "Treatment") +
-  theme_bw(base_size = 18) +
-  theme(legend.title = element_text(face = "bold"),
-        axis.title = element_text(face = "bold"),
-        panel.border = element_rect(linewidth = 1.25),
-        legend.text.align = 0) +
-  guides(linetype = "none", shape = "none",
-         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
-nod.plot
-
-##########################################################################
-## Root nodule:root biomass regression line prep for plot in supplement
+## Root nodule:root biomass regression line prep
 ##########################################################################
 nodroot <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 test(emtrends(nodroot, ~co2*inoc, "n.trt"))
 
 ## Emmean fxns for regression lines + error ribbons
 nodroot.regline <- data.frame(emmeans(nodroot, ~co2*inoc, "n.trt",
-                                   at = list(n.trt = seq(0, 630, 5)),
-                                   type = "response")) %>%
+                                      at = list(n.trt = seq(0, 630, 5)),
+                                      type = "response")) %>%
   mutate(co2.inoc = str_c(co2, "_", inoc),
          linetype = ifelse(inoc == "no.inoc", "dashed", "solid"),
          co2.inoc = factor(co2.inoc, 
@@ -1263,7 +1216,7 @@ nodroot.regline <- data.frame(emmeans(nodroot, ~co2*inoc, "n.trt",
                                       "amb_inoc", "amb_no.inoc")))
 
 ##########################################################################
-## Root nodule:root biomass plot in supplement
+## Root nodule:root biomass plot
 ##########################################################################
 nodroot.plot <- ggplot(data = df, 
                        aes(x = n.trt, y = nod.root.ratio, fill = co2.inoc)) +
@@ -1303,6 +1256,20 @@ nodroot.plot <- ggplot(data = df,
 nodroot.plot
 
 ##########################################################################
+<<<<<<< HEAD
+## Root nodule biomass regression line prep
+##########################################################################
+df$nodule.biomass[80] <- NA
+
+nod <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+test(emtrends(nod, ~co2, "n.trt"))
+test(emtrends(nod, ~inoc, "n.trt"))
+
+## Emmean fxns for regression lines + error ribbons
+nod.regline <- data.frame(emmeans(nod, ~co2*inoc, "n.trt",
+                                  at = list(n.trt = seq(0, 630, 5)),
+                                  type = "response")) %>%
+=======
 ## Root biomass regression line prep for plot in supplement
 ##########################################################################
 root <- lmer(sqrt(root.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
@@ -1312,12 +1279,25 @@ test(emtrends(root, ~co2*inoc, "n.trt"))
 root.regline <- data.frame(emmeans(root, ~co2*inoc, "n.trt",
                                       at = list(n.trt = seq(0, 630, 5)),
                                       type = "response")) %>%
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
   mutate(co2.inoc = str_c(co2, "_", inoc),
+         linetype = ifelse(inoc == "no.inoc", "dashed", "solid"),
          co2.inoc = factor(co2.inoc, 
                            levels = c("elv_inoc","elv_no.inoc", 
                                       "amb_inoc", "amb_no.inoc")))
 
 ##########################################################################
+<<<<<<< HEAD
+## Root nodule biomass plot
+##########################################################################
+nod.plot <- ggplot(data = df, 
+                   aes(x = n.trt, y = nodule.biomass, fill = co2.inoc)) +
+  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
+  geom_smooth(data = nod.regline,
+              aes(color = co2.inoc, y = response, linetype = linetype), 
+              linewidth = 1.5, se = FALSE) +
+  geom_ribbon(data = nod.regline,
+=======
 ## Root nodule:root biomass plot in supplement
 ##########################################################################
 root.plot <- ggplot(data = df, 
@@ -1327,6 +1307,7 @@ root.plot <- ggplot(data = df,
               aes(color = co2.inoc, y = response), 
               linewidth = 1.5, se = FALSE) +
   geom_ribbon(data = root.regline,
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
               aes(fill = co2.inoc, y = response,
                   ymin = lower.CL, ymax = upper.CL), 
               linewidth = 1.5, alpha = 0.25) +
@@ -1342,10 +1323,17 @@ root.plot <- ggplot(data = df,
                                expression("Ambient CO"["2"]*", uninoculated"))) +
   scale_shape_manual(values = c(21, 24), 
                      labels = c("Uninoculated", "Inoculated")) +
+<<<<<<< HEAD
+  scale_y_continuous(limits = c(-0.01, 0.6), breaks = seq(0, 0.6, 0.15)) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  labs(x = "Soil N fertilization (ppm)",
+       y = "Nodule biomass (g)",
+=======
   scale_y_continuous(limits = c(0, 9), breaks = seq(0, 9, 3)) +
   scale_linetype_manual(values = c("dashed", "solid")) +
   labs(x = "Soil N fertilization (ppm)",
        y = "Root biomass (g)",
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
        fill = "Treatment", color = "Treatment") +
   theme_bw(base_size = 18) +
   theme(legend.title = element_text(face = "bold"),
@@ -1354,7 +1342,11 @@ root.plot <- ggplot(data = df,
         legend.text.align = 0) +
   guides(linetype = "none", shape = "none",
          fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
+<<<<<<< HEAD
+nod.plot
+=======
 root.plot
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
 
 ##########################################################################
 ## BVR regression line prep for plot in supplement
@@ -1413,6 +1405,62 @@ bvr.plot <- ggplot(data = df,
 bvr.plot
 
 ##########################################################################
+## BVR regression line prep
+##########################################################################
+bvr <- lmer(bvr ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+shapiro.test(residuals(bvr))
+test(emtrends(bvr, ~co2*inoc, "n.trt"))
+
+## Emmean fxns for regression lines + error ribbons
+bvr.regline <- data.frame(emmeans(bvr, ~co2*inoc, "n.trt",
+                                  at = list(n.trt = seq(0, 630, 5)),
+                                  type = "response")) %>%
+  mutate(co2.inoc = str_c(co2, "_", inoc),
+         co2.inoc = factor(co2.inoc, 
+                           levels = c("elv_inoc","elv_no.inoc", 
+                                      "amb_inoc", "amb_no.inoc")))
+
+##########################################################################
+## BVR plot
+##########################################################################
+bvr.plot <- ggplot(data = df, 
+                    aes(x = n.trt,  y = bvr, fill = co2.inoc)) +
+  geom_hline(yintercept = 1, col = "black", linetype = "dotted") +
+  geom_hline(yintercept = 2, col = "black", linetype = "dashed") +
+  geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
+  geom_smooth(data = bvr.regline,
+              aes(color = co2.inoc, y = emmean), 
+              linewidth = 1.5, se = FALSE) +
+  geom_ribbon(data = bvr.regline,
+              aes(fill = co2.inoc, y = emmean,
+                  ymin = lower.CL, ymax = upper.CL), 
+              linewidth = 1.5, alpha = 0.25) +
+  scale_color_manual(values = full.cols,
+                     labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                                expression("Elevated CO"["2"]*", uninoculated"),
+                                expression("Ambient CO"["2"]*", inoculated"),
+                                expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_fill_manual(values = full.cols,
+                    labels = c(expression("Elevated CO"["2"]*", inoculated"),
+                               expression("Elevated CO"["2"]*", uninoculated"),
+                               expression("Ambient CO"["2"]*", inoculated"),
+                               expression("Ambient CO"["2"]*", uninoculated"))) +
+  scale_shape_manual(values = c(21, 24), 
+                     labels = c("Uninoculated", "Inoculated")) +
+  scale_y_continuous(limits = c(0, 4), breaks = seq(0, 4, 1)) +
+  labs(x = "Soil N fertilization (ppm)",
+       y = expression(bold("BVR (g L"^"-1"*")")),
+       fill = "Treatment", color = "Treatment") +
+  theme_bw(base_size = 18) +
+  theme(legend.title = element_text(face = "bold"),
+        axis.title = element_text(face = "bold"),
+        panel.border = element_rect(linewidth = 1.25),
+        legend.text.align = 0) +
+  guides(linetype = "none", shape = "none",
+         fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
+bvr.plot
+
+##########################################################################
 ## Figure 1: leaf N plots
 ##########################################################################
 # png("[insert path here]",
@@ -1427,35 +1475,42 @@ ggarrange(narea.plot, nmass.plot, marea.plot, chlarea.plot,
 ## Figure 2: leaf physiology plots
 ##########################################################################
 # png("[insert path here]",
-#     height = 12, width = 12, units = "in", res = 600)
-ggarrange(anet.plot, anet.growth.plot, vcmax25.plot, jmax25.plot,
-          jvmax25.plot, rd25.plot,
-          ncol = 2, nrow = 3, align = "hv", legend = "right",
+#     height = 8, width = 12, units = "in", res = 600)
+ggarrange(anet.growth.plot, vcmax25.plot, jmax25.plot, jvmax25.plot,
+          ncol = 2, nrow = 2, align = "hv", legend = "right",
           common.legend = TRUE, font.label = list(size = 18), 
-          labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)"))
-# dev.off()
-
-##########################################################################
-## Figure 3: nitrogen and water use efficiency plots
-##########################################################################
-# png("[insert path here]",
-#     height = 4.5, width = 8, units = "in", res = 600)
-pnue.plot
+          labels = c("(a)", "(b)", "(c)", "(d)"))
 dev.off()
 
 ##########################################################################
-## Figure 4: whole plant plots
+## Figure 3: whole plant plots
 ##########################################################################
 # png("[insert path here]",
-#     height = 8, width = 12, units = "in", res = 600)
-ggarrange(tla.plot, tbio.plot, ncost.plot, ndfa.plot,
-          ncol = 2, nrow = 2, align = "hv", legend = "right",
-          labels = c("(a)", "(b)", "(c)", "(d)"), common.legend = TRUE,
+<<<<<<< HEAD
+#     height = 12, width = 12, units = "in", res = 600)
+ggarrange(tla.plot, tbio.plot, lar.plot, rootshoot.plot,
+          ncost.plot, nodroot.plot,
+          ncol = 2, nrow = 3, align = "hv", legend = "right",
+          labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)"), common.legend = TRUE,
           font.label = list(size = 18))
-# dev.off()
+=======
+#     height = 4.5, width = 8, units = "in", res = 600)
+pnue.plot
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
+dev.off()
 
 ##########################################################################
-## Figure S1: figure showing NxCO2 interaction for leaf N content
+## Figure S1: figure showing NxCO2xI effects on Nmass, Marea
+##########################################################################
+# png("[insert path here]",
+#     height = 4, width = 12, units = "in", res = 600)
+ggarrange(nmass.plot, marea.plot, ncol = 2, nrow = 1, align = "hv", 
+          common.legend = TRUE, legend = "right", 
+          labels = c("(a)", "(b)"), font.label = list(size = 18))
+dev.off()
+
+##########################################################################
+## Figure S2: figure showing NxCO2 interaction for leaf N content
 ##########################################################################
 png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS1_leafN_CO2_N_int.png",
     height = 9, width = 11.5, units = "in", res = 600)
@@ -1466,6 +1521,22 @@ ggarrange(narea.int.plot, nmass.int.plot, marea.int.plot,
 dev.off()
 
 ##########################################################################
+<<<<<<< HEAD
+## Figure S3: figure showing NxCO2xI effects on PNUE,gc
+##########################################################################
+# png("[insert path here]",
+#     height = 4, width = 12, units = "in", res = 600)
+ggarrange(rd25.plot, pnue.plot, ncol = 2, nrow = 1, align = "hv", 
+          common.legend = TRUE, legend = "right", 
+          labels = c("(a)", "(b)"), font.label = list(size = 18))
+dev.off()
+
+##########################################################################
+## Figure S4: figure showing CO2 x N interaction effects on PNUE,gc
+##########################################################################
+# png("[insert path here]",
+#     height = 4.5, width = 7, units = "in", res = 600)
+=======
 ## Figure S2: chi figure
 ##########################################################################
 png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS2_pnue_chi.png",
@@ -1481,28 +1552,52 @@ dev.off()
 ##########################################################################
 png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS3_pnue_CO2_N_int.png",
     height = 4, width = 6.5, units = "in", res = 600)
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
 pnue.int.plot
 dev.off()
 
 ##########################################################################
+<<<<<<< HEAD
+## Figure S5: figure showing lar and root:shoot
+##########################################################################
+# png("[insert path here]",
+#     height = 7, width = 10, units = "in", res = 600)
+ggarrange(narea.int.plot, nmass.int.plot, marea.int.plot, 
+          ncol = 2, nrow = 2, align = "hv", legend = "right",
+          common.legend = TRUE, labels = c("(a)", "(b)", "(c)"),
+          font.label = list(size = 18))
+dev.off()
+
+##########################################################################
+## Figure S6: figure showing components of Ncost (belowground C and whole
+=======
 ## Figure S4: figure showing components of Ncost (belowground C and whole
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
 ## plant N)
 ##########################################################################
 # png("[insert path here]",
-#    height = 4, width = 12, units = "in", res = 600)
+#     height = 4, width = 12, units = "in", res = 600)
 ggarrange(cbg.plot, nwp.plot,
           align = "hv", common.legend = TRUE,
           nrow = 1, ncol = 2,
           legend = "right", labels = c("(a)", "(b)"), 
           font.label = list(size = 18))
-# dev.off()
+dev.off()
 
 ##########################################################################
+<<<<<<< HEAD
+## Figure S7: nitrogen fixation plots
+##########################################################################
+# png("[insert path here]",
+#     height = 4, width = 12, units = "in", res = 600)
+ggarrange(nod.plot, root.bio.plot,
+=======
 ## Figure S5: nitrogen fixation plots
 ##########################################################################
 # png("[insert path here]",
 #     height = 8, width = 12, units = "in", res = 600)
 ggarrange(nodroot.plot, nod.plot, root.plot,
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
           align = "hv", common.legend = TRUE,
           nrow = 2, ncol = 2,
           legend = "right", labels = c("(a)", "(b)", "(c)"), 
@@ -1510,10 +1605,17 @@ ggarrange(nodroot.plot, nod.plot, root.plot,
 dev.off()
 
 ##########################################################################
+<<<<<<< HEAD
+## Figure S8: BVR + root biomass
+##########################################################################
+# png("[insert path here]",
+#     height = 4.5, width = 8, units = "in", res = 600)
+=======
 ## Figure S6: BVR + root biomass
 ##########################################################################
 png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS6_bvr.png",
     height = 4.5, width = 8.5, units = "in", res = 600)
+>>>>>>> 699e0600f88c5cd03837bd662f2449bf55c768e9
 bvr.plot
 dev.off()
 
