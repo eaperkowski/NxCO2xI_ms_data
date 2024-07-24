@@ -19,6 +19,10 @@ root.biomass,g,root biomass
 nodule.biomass,g,nodule biomass
 total.biomass,g,total biomass
 nod.root.ratio,unitless,ratio of root nodule biomass to root biomass
+root.shoot.ratio,g/g,the ratio of belowground biomass (root + root nodule) to shoot biomass (leaf + stem biomass)
+lmf,g/g,leaf mass fraction (leaf biomass / total biomass)
+smf,g/g,stem mass fraction (stem biomass / total biomass)
+rmf,g/g,root mass fraction (root biomass / total biomass)
 nmass.focal,gN/g,focal leaf nitrogen content
 nmass.nod,gN/g,nodule nitrogen content
 nmass.tl,gN/g,total leaf nitrogen content
@@ -56,7 +60,6 @@ rd25,μmol/m^2/s,dark respiration rate at Tleaf = 25degC
 tpu,μmol/m^2/s,triose phosphate utilization rate 
 leaf.d13c,‰,leaf d13C discrimination
 leaf.d15n,‰,leaf d15N discrimination
-ndfa,%,percent leaf nitrogen content derived from the atmosphere
 chi,unitless,leaf d13C-derived estimate of the leaf Ci:Ca
 beta,unitless,cost for acquiring and using nitrogen relative to water 
 marea,g/m^2,leaf biomass per unit leaf area
