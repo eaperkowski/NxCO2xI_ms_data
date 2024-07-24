@@ -20,12 +20,7 @@ df <- read.csv("../data/NxCO2xI_data.csv") %>%
   mutate(n.trt = as.numeric(n.trt),
          inoc = factor(inoc, levels = c("no.inoc", "inoc")),
          co2 = factor(co2, levels = c("amb", "elv")),
-         co2.inoc = str_c(co2, "_", inoc),
-         lar = tla / total.biomass,
-         lmf = leaf.biomass / total.biomass,
-         smf = stem.biomass / total.biomass,
-         rmf = root.biomass / total.biomass,
-         root.shoot.ratio = root.biomass / (leaf.biomass + stem.biomass)) %>%
+         co2.inoc = str_c(co2, "_", inoc)) %>%
   filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05))
   ## filter all uninoculated pots that have nod biomass > 0.05 g;
   ## hard code inoc/co2 to make coefficients easier to understand
