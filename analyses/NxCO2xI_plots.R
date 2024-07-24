@@ -1391,8 +1391,8 @@ dev.off()
 ##########################################################################
 ## Figure 3: whole plant plots
 ##########################################################################
-png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_fig3_wholePlant.png",
-    height = 8, width = 12, units = "in", res = 600)
+# png("[insert path here]",
+#     height = 8, width = 12, units = "in", res = 600)
 ggarrange(tla.plot, tbio.plot, rootshoot.plot, ncost.plot, 
           ncol = 2, nrow = 2, align = "hv", legend = "right",
           labels = c("(a)", "(b)", "(c)", "(d)"), 
@@ -1402,8 +1402,8 @@ dev.off()
 ##########################################################################
 ## Figure 4: Ncost
 ##########################################################################
-png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_fig4_Nfixation.png",
-   height = 4.5, width = 8, units = "in", res = 600)
+# png("[insert path here]",
+#     height = 4.5, width = 8, units = "in", res = 600)
 nodroot.plot
 dev.off()
 
