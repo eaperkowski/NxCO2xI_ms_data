@@ -19,8 +19,7 @@ emm_options(opt.digits = FALSE)
 df <- read.csv("../data/NxCO2xI_data.csv") %>%
   mutate(n.trt = as.numeric(n.trt),
          inoc = factor(inoc, levels = c("no.inoc", "inoc")),
-         co2 = factor(co2, levels = c("amb", "elv")),
-         co2.inoc = str_c(co2, "_", inoc)) %>%
+         co2 = factor(co2, levels = c("amb", "elv"))) %>%
   filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05))
   ## filter all uninoculated pots that have nod biomass > 0.05 g;
   ## hard code inoc/co2 to make coefficients easier to understand
@@ -49,7 +48,7 @@ r.squaredGLMM(narea)
 # Post-hoc tests
 test(emtrends(narea, pairwise~co2, "n.trt")) 
 test(emtrends(narea, pairwise~inoc, "n.trt"))
-emmeans(narea, pairwise~co2*inoc)
+cld(emmeans(narea, pairwise~co2*inoc))
 
 # Individual effects
 emmeans(narea, pairwise~co2)
@@ -88,6 +87,9 @@ emmeans(nmass, pairwise~co2)
 emmeans(nmass, pairwise~inoc)
 test(emtrends(nmass, ~1, "n.trt"))
 
+# % change CO2
+(0.022 - 0.045) / 0.045 * 100
+
 ##########################################################################
 ## Leaf mass per unit leaf area (Marea)
 ##########################################################################
@@ -114,6 +116,9 @@ emmeans(marea, pairwise~co2, type = "response")
 emmeans(marea, pairwise~inoc)
 test(emtrends(marea, ~1, "n.trt"))
 
+# % change CO2
+(61.586 - 42.903) / 42.903 * 100
+
 ##########################################################################
 ## Chlorophyll content (Chlarea)
 ##########################################################################
@@ -133,12 +138,14 @@ r.squaredGLMM(chlarea)
 
 # Post-hoc tests
 test(emtrends(chlarea, pairwise~co2, "n.trt")) 
-test(emtrends(chlarea, pairwise~inoc, "n.trt"))
 
 # Individual effects
-emmeans(chlarea, pairwise~co2, type = "response")
+emmeans(chlarea, pairwise~co2)
 emmeans(chlarea, pairwise~inoc)
 test(emtrends(chlarea, ~1, "n.trt"))
+
+# % change CO2
+(0.088 - 0.128) / 0.128 * 100
 
 ##########################################################################
 ## Net photosynthesis at 420ppm CO2 (Anet,420)
@@ -165,6 +172,9 @@ test(emtrends(anet, pairwise~inoc, "n.trt"))
 emmeans(anet, pairwise~co2)
 cld(emmeans(anet, pairwise~inoc))
 test(emtrends(anet, ~1, "n.trt"))
+
+# % Change CO2
+(14.649 - 17.723) / 17.723 * 100
 
 ##########################################################################
 ## Net photosynthesis at growth CO2 concentration (Anet,growth)
@@ -193,6 +203,9 @@ test(emtrends(anet.growth, pairwise~inoc, "n.trt"))
 emmeans(anet.growth, pairwise~co2)
 cld(emmeans(anet.growth, pairwise~inoc))
 test(emtrends(anet.growth, ~1, "n.trt"))
+
+# % change CO2
+(23.535 - 17.723) / 17.723 * 100
 
 ##########################################################################
 ## Maximum Rubisco carboxylation rate (Vcmax25)
@@ -286,6 +299,9 @@ emmeans(jvmax, pairwise~co2)
 emmeans(jvmax, pairwise~inoc)
 test(emtrends(jvmax, ~1, "n.trt"))
 
+# % change CO2
+(1.901 - 1.766) / 1.766 * 100
+
 ##########################################################################
 ## Dark respiration (Rd25)
 ##########################################################################
@@ -343,10 +359,14 @@ test(emtrends(pnue, pairwise~inoc, "n.trt"))
 emmeans(pnue, pairwise~co2)
 emmeans(pnue, pairwise~inoc)
 
+# % change CO2
+(17.823 - 9.055) / 9.055 * 100
+
 ##########################################################################
 ## Total leaf area
 ##########################################################################
-tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+tla <- lmer(tla ~ co2 * inoc * n.trt + (1|rack:co2),
+            data = df)
 
 # Check model fit
 plot(tla)
@@ -366,18 +386,18 @@ test(emtrends(tla, pairwise~co2, "n.trt"))
 test(emtrends(tla, pairwise~inoc, "n.trt"))
 emmeans(tla, pairwise~co2*inoc)
 
-## Individual effects
+# Individual effects
 emmeans(tla, pairwise~co2)
 emmeans(tla, pairwise~inoc)
 
-## Does inoculation stimulate TLA under low soil N?
-emmeans(tla, pairwise~co2*inoc, "n.trt", type = "response",
-        at = list(n.trt = c(0,630)))
+# % change CO2
+(523.240 - 346.063) / 346.063 * 100
 
 ##########################################################################
 ## Total biomass
 ##########################################################################
-tbio <- lmer(sqrt(total.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+tbio <- lmer(sqrt(total.biomass) ~ co2 * inoc * n.trt + (1|rack:co2),
+             data = df)
 
 # Check model fit
 plot(tbio)
@@ -397,18 +417,19 @@ test(emtrends(tbio, pairwise~inoc, "n.trt"))
 test(emtrends(tbio, pairwise~co2, "n.trt"))
 emmeans(tbio, pairwise~co2*inoc)
 
-## Individual effects
+# Individual effects
 emmeans(tbio, pairwise~co2, type = "response")
 emmeans(tbio, pairwise~inoc)
 cld(emmeans(tbio, pairwise~co2*inoc))
 
-## Does inoculation increase positive effect of elevated CO2 on total biomass?
-emmeans(tbio, pairwise~co2*inoc, at = list(n.ppm = 0)) # No
+# % change CO2
+(7.498 - 3.715) / 3.715 * 100
 
 ##########################################################################
 ## Leaf biomass
 ##########################################################################
-leaf.bio <- lmer(sqrt(leaf.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+leaf.bio <- lmer(sqrt(leaf.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), 
+                 data = df)
 
 # Check model fit
 plot(leaf.bio)
@@ -432,10 +453,14 @@ emmeans(leaf.bio, pairwise~co2, type = "response")
 emmeans(leaf.bio, pairwise~inoc)
 test(emtrends(leaf.bio, ~1, "n.trt"))
 
+# % change CO2
+(3.00 - 1.380) / 1.380 * 100
+
 ##########################################################################
-## Leaf biomass
+## Stem biomass
 ##########################################################################
-stem.bio <- lmer(sqrt(stem.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+stem.bio <- lmer(sqrt(stem.biomass) ~ co2 * inoc * n.trt + (1|rack:co2),
+                 data = df)
 
 # Check model fit
 plot(stem.bio)
@@ -451,9 +476,6 @@ Anova(stem.bio)
 r.squaredGLMM(stem.bio)
 
 # Pairwise comparisons
-emmeans(stem.bio, pairwise~co2, type = "response")
-
-
 test(emtrends(stem.bio, pairwise~co2, "n.trt"))
 test(emtrends(stem.bio, pairwise~inoc, "n.trt"))
 
@@ -461,6 +483,9 @@ test(emtrends(stem.bio, pairwise~inoc, "n.trt"))
 emmeans(stem.bio, pairwise~co2, type = "response")
 emmeans(stem.bio, pairwise~inoc)
 test(emtrends(stem.bio, ~1, "n.trt"))
+
+# % change CO2
+(1.555 - 0.789) / 0.789 * 100
 
 ##########################################################################
 ## Root biomass
@@ -490,11 +515,13 @@ emmeans(root.bio, pairwise~co2, type = "response")
 emmeans(root.bio, pairwise~inoc)
 test(emtrends(root.bio, ~1, "n.trt"))
 
+# % change CO2
+(2.608 - 1.330) / 1.330 * 100
+
 ##########################################################################
 ## Root nodule biomass
 ##########################################################################
 df$nodule.biomass[80] <- NA
-
 nod.bio <- lmer(sqrt(nodule.biomass) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
@@ -514,10 +541,13 @@ r.squaredGLMM(nod.bio)
 test(emtrends(nod.bio, pairwise~co2, "n.trt"))
 test(emtrends(nod.bio, pairwise~inoc, "n.trt"))
 
-## Individual effects
-emmeans(nod.bio, pairwise~co2)
+# Individual effects
+emmeans(nod.bio, pairwise~co2, type = "response")
 emmeans(nod.bio, pairwise~inoc)
 test(emtrends(nod.bio, ~1, "n.trt"))
+
+# % change CO2
+(0.092 - 0.054) / 0.054 * 100
 
 ##########################################################################
 ## Root:shoot ratio
@@ -546,6 +576,9 @@ cld(emmeans(rootshoot, ~co2*inoc, type = "response"))
 
 test(emtrends(rootshoot, ~1, "n.trt"))
 test(emtrends(rootshoot, ~inoc, "n.trt"))
+
+# % change CO2
+(0.643 - 0.689) / 0.689 * 100
 
 ##########################################################################
 ## Leaf mass fraction
@@ -630,10 +663,8 @@ test(emtrends(rmf, ~inoc, "n.trt"))
 ## Structural carbon cost to acquire nitrogen (Ncost)
 ##########################################################################
 df$ncost[c(100, 101)] <- NA
-df$ncost[c(38, 103)] <- NA
-df$ncost[32] <- NA
 
-ncost <- lmer(ncost ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+ncost <- lmer(log(ncost) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
 plot(ncost)
@@ -649,7 +680,10 @@ Anova(ncost)
 r.squaredGLMM(ncost)
 
 # Pairwise comparisons
-cld(emtrends(ncost, pairwise~co2*inoc, "n.trt"))
+test(emtrends(ncost, ~co2*inoc, "n.trt"))
+
+
+cld(emtrends(ncost, ~co2*inoc, "n.trt"))
 test(emtrends(ncost, pairwise~co2, "n.trt"))
 test(emtrends(ncost, pairwise~inoc, "n.trt"))
 emmeans(ncost, pairwise~co2*inoc)
@@ -678,19 +712,24 @@ Anova(cbg)
 r.squaredGLMM(cbg)
 
 # Pairwise comparisons
+test(emtrends(cbg, pairwise~co2, "n.trt"))
 test(emtrends(cbg, pairwise~inoc, "n.trt"))
-cld(emmeans(cbg, pairwise~co2*inoc, type = "response"))
+cld(emmeans(cbg, pairwise~co2*inoc))
 
-## Individual effects
-emmeans(cbg, pairwise~co2, type = "response")
-emmeans(cbg, pairwise~inoc, type = "response")
+# Individual effects
+emmeans(cbg, pairwise~co2)
+emmeans(cbg, pairwise~inoc)
 test(emtrends(cbg, ~1, "n.trt"))
+
+# % change CO2
+(1.303 - 0.675) / 0.675 * 100
+
 
 ##########################################################################
 ## Whole plant nitrogen
 ##########################################################################
 df$wpn[c(92)] <- NA
-wpn <- lmer(sqrt(wpn) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+wpn <- lmer(wpn ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 
 # Check model fit
 plot(wpn)
@@ -710,9 +749,12 @@ test(emtrends(wpn, pairwise~inoc, "n.trt"))
 test(emtrends(wpn, pairwise~co2, "n.trt"))
 
 ## Individual effects
-emmeans(wpn, pairwise~co2, type = "response")
-emmeans(wpn, pairwise~inoc, type = "response")
-test(emtrends(wpn, ~1, "n.trt", regrid = "response"))
+emmeans(wpn, pairwise~co2)
+emmeans(wpn, pairwise~inoc)
+test(emtrends(wpn, ~1, "n.trt"))
+
+# % change CO2
+(0.149 - 0.118) / 0.118 * 100
 
 ##########################################################################
 ## Root nodule biomass: root biomass

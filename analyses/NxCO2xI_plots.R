@@ -15,21 +15,11 @@ library(multcomp)
 emm_options(opt.digits = FALSE)
 
 # Load compiled datasheet
-df <- read.csv("../data/NxCO2xI_data.csv", 
-               na.strings = "NA") %>%
+df <- read.csv("../data/NxCO2xI_data.csv", na.strings = "NA") %>%
   mutate(n.trt = as.numeric(n.trt),
          inoc = factor(inoc, levels = c("no.inoc", "inoc")),
          co2 = factor(co2, levels = c("amb", "elv"))) %>%
-  filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05)) %>%
-  unite(col = "co2.inoc", co2:inoc, sep = "_", remove = FALSE) %>%
-  mutate(co2.inoc = factor(co2.inoc,
-                           levels = c("elv_inoc", "elv_no.inoc",
-                                      "amb_inoc", "amb_no.inoc")),
-         lar = tla / total.biomass,
-         lmf = leaf.biomass / total.biomass,
-         smf = stem.biomass / total.biomass,
-         rmf = root.biomass / total.biomass,
-         root.shoot.ratio = root.biomass / (leaf.biomass + stem.biomass))
+  filter(inoc == "inoc" | (inoc == "no.inoc" & nod.root.ratio < 0.05))
 
 ## Add colorblind friendly palette
 co2.cols <- c("#2166ac", "#b2182b")
@@ -1150,10 +1140,8 @@ root.plot
 ## Ncost regression line prep
 ##########################################################################
 df$ncost[c(100, 101)] <- NA
-df$ncost[c(38, 103)] <- NA
-df$ncost[32] <- NA
 
-ncost <- lmer(ncost ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+ncost <- lmer(log(ncost) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
 test(emtrends(ncost, ~co2*inoc, "n.trt"))
 
 ## Emmean fxns for regression lines + error ribbons
@@ -1172,10 +1160,10 @@ ncost.regline <- data.frame(emmeans(ncost, ~co2*inoc, "n.trt",
 ncost.plot <- ggplot(data = df, aes(x = n.trt, y = ncost, fill = co2.inoc)) +
   geom_jitter(aes(shape = inoc), size = 3, alpha = 0.75, width = 5) +
   geom_smooth(data = ncost.regline,
-              aes(color = co2.inoc, y = emmean, linetype = linetype), 
+              aes(color = co2.inoc, y = response, linetype = linetype), 
               linewidth = 1.5, se = FALSE) +
   geom_ribbon(data = ncost.regline,
-              aes(fill = co2.inoc, y = emmean, 
+              aes(fill = co2.inoc, y = response, 
                   ymin = lower.CL, ymax = upper.CL), 
               linewidth = 1.5, alpha = 0.25) +
   scale_color_manual(values = full.cols,
@@ -1190,7 +1178,7 @@ ncost.plot <- ggplot(data = df, aes(x = n.trt, y = ncost, fill = co2.inoc)) +
                                expression("Ambient CO"["2"]*", uninoculated"))) +
   scale_shape_manual(values = c(21, 24), 
                      labels = c("Uninoculated", "Inoculated")) +
-  scale_y_continuous(limits = c(0, 20), breaks = seq(0, 20, 5)) +
+  scale_y_continuous(limits = c(0, 24), breaks = seq(0, 24, 6)) +
   scale_linetype_manual(values = c("dashed", "solid")) +
   labs(x = "Soil N fertilization (ppm)",
        y = expression(bold("Cost to acquire N (gC gN"^"-1"*")")),
@@ -1253,7 +1241,8 @@ cbg.plot <- ggplot(data = df, aes(x = n.trt, y = cbg, fill = co2.inoc)) +
   theme(axis.title = element_text(face = "bold"),
         legend.title = element_text(face = "bold"),
         panel.border = element_rect(linewidth = 1.25),
-        legend.text.align = 0) +
+        legend.text.align = 0,
+        axis.title.y = element_text(size = 16)) +
   guides(linetype = "none", shape = "none",
          fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
 cbg.plot
@@ -1449,13 +1438,12 @@ pnue.int.plot
 ##########################################################################
 ## Figure S5: figure showing components of Ncost (belowground C and whole
 ##########################################################################
-# png("[insert path here]",
-#     height = 4, width = 12, units = "in", res = 600)
+png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS5_ncost_comps.png",
+    height = 4.5, width = 12, units = "in", res = 600)
 ggarrange(cbg.plot, nwp.plot,
-          align = "hv", common.legend = TRUE,
-          nrow = 1, ncol = 2,
+          align = "hv", common.legend = TRUE, nrow = 1, ncol = 2,
           legend = "right", labels = c("(a)", "(b)"), 
-          font.label = list(size = 18))
+          hjust = 0, font.label = list(size = 18))
 dev.off()
 
 ##########################################################################
@@ -1468,7 +1456,7 @@ ggarrange(nodroot.plot, nod.plot, root.plot,
           nrow = 2, ncol = 2,
           legend = "right", labels = c("(a)", "(b)", "(c)"), 
           font.label = list(size = 18))
-dev.off()
+# dev.off()
 
 ##########################################################################
 ## Figure S7: BVR 
@@ -1476,5 +1464,5 @@ dev.off()
 # png("[insert path here]",
 #     height = 4.5, width = 8.5, units = "in", res = 600)
 bvr.plot
-dev.off()
+# dev.off()
 
