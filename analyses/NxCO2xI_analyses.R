@@ -138,6 +138,7 @@ r.squaredGLMM(chlarea)
 
 # Post-hoc tests
 test(emtrends(chlarea, pairwise~co2, "n.trt")) 
+test(emtrends(chlarea, pairwise~inoc, "n.trt"))
 
 # Individual effects
 emmeans(chlarea, pairwise~co2)
@@ -145,7 +146,7 @@ emmeans(chlarea, pairwise~inoc)
 test(emtrends(chlarea, ~1, "n.trt"))
 
 # % change CO2
-(0.088 - 0.128) / 0.128 * 100
+(0.090 - 0.129) / 0.129 * 100
 
 ##########################################################################
 ## Net photosynthesis at 420ppm CO2 (Anet,420)
