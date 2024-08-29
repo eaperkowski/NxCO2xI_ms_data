@@ -682,9 +682,6 @@ r.squaredGLMM(ncost)
 
 # Pairwise comparisons
 test(emtrends(ncost, ~co2*inoc, "n.trt"))
-
-
-cld(emtrends(ncost, ~co2*inoc, "n.trt"))
 test(emtrends(ncost, pairwise~co2, "n.trt"))
 test(emtrends(ncost, pairwise~inoc, "n.trt"))
 emmeans(ncost, pairwise~co2*inoc)
@@ -725,7 +722,6 @@ test(emtrends(cbg, ~1, "n.trt"))
 # % change CO2
 (1.303 - 0.675) / 0.675 * 100
 
-
 ##########################################################################
 ## Whole plant nitrogen
 ##########################################################################
@@ -760,7 +756,8 @@ test(emtrends(wpn, ~1, "n.trt"))
 ##########################################################################
 ## Root nodule biomass: root biomass
 ##########################################################################
-nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), data = df)
+nod.root.ratio <- lmer(sqrt(nod.root.ratio) ~ co2 * inoc * n.trt + (1|rack:co2), 
+                       data = df)
 
 # Check model fit
 plot(nod.root.ratio)
