@@ -240,6 +240,16 @@ test(emtrends(vcmax, ~1, "n.trt"))
 # % change inoculation
 (94.700 - 65.225) / 65.225 * 100
 
+# % change N fertilization between 0 and 280 ppm N (reviewer comment)
+emmeans(vcmax, ~inoc | n.trt, at = list(n.trt = c(0, 280)))
+
+
+# % change N fertilization between 350 and 630 ppm N (reviewer comment)
+emmeans(vcmax, ~inoc | n.trt, at = list(n.trt = c(350, 630)))
+
+
+
+
 ##########################################################################
 ## Maximum electron transport for RuBP regeneration rate (Jmax25)
 ##########################################################################
@@ -391,6 +401,9 @@ emmeans(tla, pairwise~co2*inoc)
 emmeans(tla, pairwise~co2)
 emmeans(tla, pairwise~inoc)
 
+# Is there a null effect of CO2 under low N fertilization?
+emmeans(tla, pairwise~co2|inoc, "n.trt", at = list(n.trt = c(0, 35, 70, 140)))
+
 # % change CO2
 (523.240 - 346.063) / 346.063 * 100
 
@@ -422,6 +435,10 @@ emmeans(tbio, pairwise~co2*inoc)
 emmeans(tbio, pairwise~co2, type = "response")
 emmeans(tbio, pairwise~inoc)
 cld(emmeans(tbio, pairwise~co2*inoc))
+
+# Is there a null effect of CO2 under low N fertilization?
+emmeans(tbio, pairwise~co2|inoc, "n.trt", at = list(n.trt = c(0, 35, 70)))
+
 
 # % change CO2
 (7.498 - 3.715) / 3.715 * 100

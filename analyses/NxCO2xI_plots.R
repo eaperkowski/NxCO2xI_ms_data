@@ -1075,8 +1075,7 @@ nod.plot <- ggplot(data = df,
   theme(legend.title = element_text(face = "bold"),
         axis.title = element_text(face = "bold"),
         panel.border = element_rect(linewidth = 1.25),
-        legend.text.align = 0,
-        axis.title.y = element_text(size = 15)) +
+        legend.text.align = 0) +
   guides(linetype = "none", shape = "none",
          fill = guide_legend(override.aes = list(shape = c(24, 21, 24, 21))))
 nod.plot
@@ -1359,10 +1358,10 @@ bvr.plot
 ## Figure 1: leaf N plots
 ##########################################################################
 # png("[insert path here]",
-#     height = 8, width = 12, units = "in", res = 600)
-ggarrange(narea.plot, nmass.plot, marea.plot, chlarea.plot, 
-          ncol = 2, nrow = 2, align = "hv", legend = "right",
-          common.legend = TRUE, labels = c("(a)", "(b)", "(c)", "(d)"),
+#     height = 4, width = 12, units = "in", res = 600)
+ggarrange(narea.plot, chlarea.plot, 
+          ncol = 2, nrow = 1, align = "hv", legend = "right",
+          common.legend = TRUE, labels = "AUTO",
           font.label = list(size = 18))
 # dev.off()
 
@@ -1374,8 +1373,8 @@ ggarrange(narea.plot, nmass.plot, marea.plot, chlarea.plot,
 ggarrange(anet.growth.plot, vcmax25.plot, jmax25.plot, jvmax25.plot,
           ncol = 2, nrow = 2, align = "hv", legend = "right",
           common.legend = TRUE, font.label = list(size = 18), 
-          labels = c("(a)", "(b)", "(c)", "(d)"))
-dev.off()
+          labels = "AUTO")
+# dev.off()
 
 ##########################################################################
 ## Figure 3: whole plant plots
@@ -1384,9 +1383,9 @@ dev.off()
 #     height = 8, width = 12, units = "in", res = 600)
 ggarrange(tla.plot, tbio.plot, rootshoot.plot, ncost.plot, 
           ncol = 2, nrow = 2, align = "hv", legend = "right",
-          labels = c("(a)", "(b)", "(c)", "(d)"), 
+          labels = "AUTO", 
           common.legend = TRUE, font.label = list(size = 18))
-dev.off()
+# dev.off()
 
 ##########################################################################
 ## Figure 4: Ncost
@@ -1394,7 +1393,7 @@ dev.off()
 # png("[insert path here]",
 #     height = 4.5, width = 8, units = "in", res = 600)
 nodroot.plot
-dev.off()
+# dev.off()
 
 ##########################################################################
 ## Figure S1: figure showing NxCO2xI effects on Nmass, Marea
@@ -1403,8 +1402,8 @@ dev.off()
 #     height = 4, width = 12, units = "in", res = 600)
 ggarrange(nmass.plot, marea.plot, ncol = 2, nrow = 1, align = "hv", 
           common.legend = TRUE, legend = "right", 
-          labels = c("(a)", "(b)"), font.label = list(size = 18))
-dev.off()
+          labels = "AUTO", font.label = list(size = 18))
+# dev.off()
 
 ##########################################################################
 ## Figure S2: figure showing NxCO2 interaction for leaf N content
@@ -1413,7 +1412,7 @@ dev.off()
 #     height = 9, width = 11.5, units = "in", res = 600)
 ggarrange(narea.int.plot, nmass.int.plot, marea.int.plot, 
           ncol = 2, nrow = 2, align = "hv", legend = "right",
-          common.legend = TRUE, labels = c("(a)", "(b)", "(c)"),
+          common.legend = TRUE, labels = "AUTO",
           font.label = list(size = 18))
 # dev.off()
 
@@ -1424,7 +1423,7 @@ ggarrange(narea.int.plot, nmass.int.plot, marea.int.plot,
 #     height = 4, width = 12, units = "in", res = 600)
 ggarrange(rd25.plot, pnue.plot, ncol = 2, nrow = 1, align = "hv", 
           common.legend = TRUE, legend = "right", 
-          labels = c("(a)", "(b)"), font.label = list(size = 18))
+          labels = "AUTO", font.label = list(size = 18))
 # dev.off()
 
 ##########################################################################
@@ -1438,23 +1437,23 @@ pnue.int.plot
 ##########################################################################
 ## Figure S5: figure showing components of Ncost (belowground C and whole
 ##########################################################################
-png("../../2022_NxCO2xI/working_drafts/figs/NxCO2xI_figS5_ncost_comps.png",
-    height = 4.5, width = 12, units = "in", res = 600)
+# png("[insert path here]",
+#     height = 4.5, width = 12, units = "in", res = 600)
 ggarrange(cbg.plot, nwp.plot,
           align = "hv", common.legend = TRUE, nrow = 1, ncol = 2,
-          legend = "right", labels = c("(a)", "(b)"), 
+          legend = "right", labels = "AUTO", 
           hjust = 0, font.label = list(size = 18))
-dev.off()
+# dev.off()
 
 ##########################################################################
 ## Figure S6: nitrogen fixation plots
 ##########################################################################
 # png("[insert path here]",
-#     height = 8, width = 12, units = "in", res = 600)
-ggarrange(nodroot.plot, nod.plot, root.plot,
+#    height = 4, width = 12, units = "in", res = 600)
+ggarrange(nod.plot, root.plot,
           align = "hv", common.legend = TRUE,
-          nrow = 2, ncol = 2,
-          legend = "right", labels = c("(a)", "(b)", "(c)"), 
+          nrow = 1, ncol = 2,
+          legend = "right", labels = "AUTO", 
           font.label = list(size = 18))
 # dev.off()
 
